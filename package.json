@@ -1,0 +1,18 @@
+{
+  "name": "discord-moderator",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "cd src && node index.js",
+    "build": "npm i"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "discord-buttons": "^3.2.1",
+    "discord.js": "^12.5.3",
+    "dotenv": "^9.0.2",
+    "mongoose": "^5.12.14"
+  }
+}
