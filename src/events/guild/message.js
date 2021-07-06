@@ -4,7 +4,7 @@ const ServerService = require('../../service/ServerService')
 module.exports = async (client, msg) => {
     if (msg.author.bot) return // Do not process bot messages.
 
-    const server = await ServerService.getById(msg.guild.id, true)
+    const server = await ServerService.getById(msg.guild.id)
 
     if (!msg.content.startsWith(server.prefix)) return // Ignore non-command messages.
 

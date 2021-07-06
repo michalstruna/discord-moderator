@@ -11,5 +11,5 @@ const Id = String
 
 exports.Server = model('Server', new Schema({
     id: { type: Id, required: true, index: true },
-    prefix: { type: String, required: true, default: Config.DEFAULT_PREFIX }
+    prefix: { type: String, required: true, default: '>' }
 }))
