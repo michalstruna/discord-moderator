@@ -6,10 +6,11 @@ exports.execute = async (command, client, msg, args) => {
         await command.execute(client, msg, args)
 
         if (command.react !== false) {
-            MessageService.react(msg, MessageService.Emoji.SUCCESS)
+            MessageService.reactSuccess(msg)
         }
     } catch (error) {
         console.error(error)
-        MessageService.react(msg, MessageService.Emoji.FAIL)
+        MessageService.reactFail(msg)
+        MessageService.sendEmbeddedFail({ title: error.title || 'Something bad happened', description: error.message, color: error.color })
     }
 }

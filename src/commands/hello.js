@@ -1,7 +1,14 @@
+const Regex = require('../utils/Regex')
+
 module.exports = {
     name: 'hello',
     description: 'Send hello to chat.',
-    async execute(client, msg, args) {
-        msg.channel.send('Hello!')
+    args: [
+        { name: 'word', value: ['hello', 'hi', 'bye'], default: 'hello' },
+        { name: 'age', value: Regex.Type.REAL },
+        { name: 'name', value: Regex.Type.ANY, required: true },
+    ],
+    async execute(client, msg, { word, name, args }) {
+        msg.channel.send(`${word}, ${name}! *${args.join(', ')}*`)
     }
 }

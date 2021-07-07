@@ -19,7 +19,6 @@ exports.getById = async id => {
 }
 
 exports.updateById = async (id, update) => {
-    console.log({ id, ...update })
     const server = await db.Server.updateOne({ id }, { id, ...update }, { upsert: true })
     serversCache.set(id, server)
     return server

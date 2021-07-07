@@ -1,4 +1,5 @@
 const CommandService = require('../../service/CommandService')
+const MessageService = require('../../service/MessageService')
 const ServerService = require('../../service/ServerService')
 
 module.exports = async (client, msg) => {
@@ -6,11 +7,11 @@ module.exports = async (client, msg) => {
 
     const server = await ServerService.getById(msg.guild.id)
 
+    msg.content = msg.content.trim()
     if (!msg.content.startsWith(server.prefix)) return // Ignore non-command messages.
 
-    const args = msg.content.split(/ +/)
-    const cmd = args.shift().toLowerCase().slice(server.prefix.length)
-    const command = client.commands.get(cmd)
+    const [commandName, args] = MessageService.parseCommand(msg.content, server.prefix)
+    const command = client.commands.get(commandName)
 
     if (command) {
         CommandService.execute(command, client, msg, args)
