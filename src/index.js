@@ -1,5 +1,5 @@
 require('dotenv').config()
-require('./service/db')
+require('./service/Db')
 
 const Discord = require('discord.js')
 const Buttons = require('discord-buttons')

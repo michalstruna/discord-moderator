@@ -1,10 +1,10 @@
 const MessageService = require('../service/MessageService')
 
-exports.execute = async (command, client, msg, args) => {
+exports.execute = async (command, client, msg, args, metadata) => {
     try {
         console.log(`command: ${msg.content}`, args)
         const parsedArgs = MessageService.parseArgs(args, command.args)
-        await command.execute(client, msg, parsedArgs)
+        await command.execute(client, msg, parsedArgs, metadata)
 
         if (command.react !== false) {
             MessageService.reactSuccess(msg)
@@ -14,4 +14,8 @@ exports.execute = async (command, client, msg, args) => {
         MessageService.reactFail(msg)
         MessageService.sendEmbeddedFail(msg.channel, error.title || 'Something bad happened', error.message, error.color)
     }
+}
+
+exports.create = async (name, description, { args, onRun, onGet, onSet, onRemove, onEnd }) => {
+    // { name: 'remove', value: '--rm' }
 }

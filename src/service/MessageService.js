@@ -8,9 +8,10 @@ exports.react = (msg, emoji) => msg.react(emoji)
 exports.reactSuccess = msg => exports.react(msg, Emoji.SUCCESS)
 exports.reactFail = msg => exports.react(msg, Emoji.FAIL)
 
-exports.sendEmbedded = (channel, title, description, color) => channel.send({ embed: { title, description, color } })
-exports.sendEmbeddedSuccess = (channel, title, description, color = Color.GREEN) => exports.sendEmbedded(channel, title, description, color)
-exports.sendEmbeddedFail = (channel, title, description, color = Color.RED) => exports.sendEmbedded(channel, title, description, color)
+exports.sendEmbedded = (channel, data = {}) => channel.send({ embed: data })
+exports.sendEmbeddedSuccess = (channel, description) => exports.sendEmbedded(channel, { description: Emoji.SUCCESS + ' ' + description, color: Color.GREEN })
+exports.sendEmbeddedFail = (channel, title, description, color = Color.RED) => exports.sendEmbedded(channel, { title, description, color })
+exports.sendEmbeddedInfo = (channel, description) => exports.sendEmbedded(channel, { description: Emoji.INFO + ' ' + description, color: Color.BLUE })
 
 exports.parseCommand = (text, prefix) => {
     const prefixRegex = new RegExp(`^\\${prefix} *`)

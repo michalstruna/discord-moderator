@@ -14,6 +14,6 @@ module.exports = async (client, msg) => {
     const command = client.commands.get(commandName)
 
     if (command) {
-        CommandService.execute(command, client, msg, args)
+        CommandService.execute(command, client, msg, args, { server })
     }
 }

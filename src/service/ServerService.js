@@ -1,4 +1,4 @@
-const db = require('./db')
+const Db = require('./Db')
 
 const serversCache = new Map()
 
@@ -7,19 +7,14 @@ exports.getById = async id => {
         return serversCache.get(id)
     }
 
-    let server = await db.Server.findOne({ id })
-
-    if (!server) {
-        server = await new db.Server({ id }).save()
-    }
-
+    const server = await Db.get(Db.Server, { id }, true)
     serversCache.set(id, server)
     
     return server
 }
 
 exports.updateById = async (id, update) => {
-    const server = await db.Server.updateOne({ id }, { id, ...update }, { upsert: true })
+    const server = await Db.update(Db.Server, { id }, update)
     serversCache.set(id, server)
     return server
 }

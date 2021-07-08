@@ -1,4 +1,5 @@
 module.exports = {
     SUCCESS: '✅',
-    FAIL: '❌'
+    FAIL: '❌',
+    INFO: 'ℹ️'
 }
