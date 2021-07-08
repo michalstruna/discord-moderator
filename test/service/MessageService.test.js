@@ -1,5 +1,6 @@
 const Config = require('../../src/constants/Config.js')
 const MessageService = require('../../src/service/MessageService')
+const { InvalidInputError } = require('../../src/utils/Errors.js')
 
 const prefix = Config.DEFAULT_PREFIX
 const cmd = content => MessageService.parseCommand(`${prefix}${content}`, prefix)
@@ -39,7 +40,7 @@ describe('parseCommand', () => {
     test('Upper case', () => {
         const [commandName, args] = cmd('HEllO WoRlD!')
         expect(commandName).toEqual('hello')
-        expect(args).toEqual(['world!']) 
+        expect(args).toEqual(['WoRlD!']) 
     })
 
 })
@@ -84,8 +85,7 @@ describe('parseArgs', () => {
 
     test('Named args default value 2', () => {
         const rules = [{ name: 'test', value: ['a', 'b'], defaultValue: 'c' }]
-        const args = MessageService.parseArgs(['d'], rules) 
-        console.log(args)
+        const args = MessageService.parseArgs(['d'], rules)
         expect(args).toEqual({ test: 'c', args: ['d'] })
     })
 
@@ -97,10 +97,36 @@ describe('parseArgs', () => {
 
     test('Hello', () => {
         const rules = [
-            { name: 'word', value: ['hello', 'hi', 'bye'], default: 'hello' },
-            { name: 'age', value: Regex.Type.REAL },
-            { name: 'name', value: Regex.Type.ANY, required: true },
+            { name: 'word', value: ['hello', 'hi', 'bye'], defaultValue: 'hello' },
+            { name: 'age', value: /^[0-9]+(\.[0-9]+)?/ },
+            { name: 'name', value: /^.*$/, required: true },
         ]
+
+        const parseArgs = () => MessageService.parseArgs([], rules)
+        expect(parseArgs).toThrow(InvalidInputError)
+        expect(parseArgs).toThrow('You need to specify **name**.')
+    })
+
+    test('Hello 2', () => {
+        const rules = [
+            { name: 'word', value: ['hello', 'hi', 'bye'], defaultValue: 'hello' },
+            { name: 'age', value: /^[0-9]+(\.[0-9]+)?/ },
+            { name: 'name', value: /^.*$/, required: true },
+        ]
+
+        const args = MessageService.parseArgs(['Michal'], rules)
+        expect(args).toEqual({ name: 'Michal', word: 'hello', args: [] })
+    })
+
+    test('Hello 3', () => {
+        const rules = [
+            { name: 'word', value: ['hello', 'hi', 'bye'], defaultValue: 'hello' },
+            { name: 'age', value: /^[0-9]+(\.[0-9]+)?/ },
+            { name: 'name', value: /^.*$/, required: true },
+        ]
+
+        const args = MessageService.parseArgs(['Michal', 'Hi', '19'], rules)
+        expect(args).toEqual({ name: 'Michal', word: 'hi', age: '19', args: [] })
     })
 
 })

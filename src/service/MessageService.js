@@ -14,8 +14,8 @@ exports.sendEmbeddedFail = (channel, title, description, color = Color.RED) => e
 
 exports.parseCommand = (text, prefix) => {
     const prefixRegex = new RegExp(`^\\${prefix} *`)
-    const args = text.toLowerCase().trim().replace(prefixRegex, '').split(/ +/)
-    const commandName = prefixRegex.test(text) ? args.shift() : null
+    const args = text.trim().replace(prefixRegex, '').split(/ +/)
+    const commandName = prefixRegex.test(text) ? args.shift().toLowerCase() : null
 
     return [commandName, args]
 }
@@ -28,13 +28,14 @@ exports.parseArgs = (args, rules = []) => {
 
     NEXT_ARG: for (const arg of args) {
         for (const { name, value, parse } of rules) {
-            const arrayOk = Array.isArray(value) && value.includes(arg)
-            const regexOk = value instanceof RegExp && value.test(arg)
-            const equalOk = (typeof value === 'string' || typeof value === 'number') && value === arg
+            const arrayOk = Array.isArray(value) && value.includes(arg.toLowerCase())
+            const regexOk = value instanceof RegExp && value.test(arg.toLowerCase())
+            const equalOk = (typeof value === 'string' || typeof value === 'number') && value === arg.toLowerCase()
 
             if (!usedRules[name] && (arrayOk || regexOk || equalOk)) {
                 usedRules[name] = true
-                named[name] = parse ? parse(arg) : arg
+                const tmp = arrayOk ? arg.toLowerCase() : arg
+                named[name] = parse ? parse(tmp) : tmp
                 continue NEXT_ARG
             }
         }
@@ -44,11 +45,11 @@ exports.parseArgs = (args, rules = []) => {
 
     for (const { name, required, defaultValue } of rules) {
         if (!usedRules[name]) {
-            if (defaultValue) {
+            if (defaultValue !== undefined) {
                 named[name] = defaultValue
             } else {
                 if (required) {
-                    throw new InvalidInputError(`You have to specify **${name}**.`)
+                    throw new InvalidInputError(`You need to specify **${name}**.`)
                 }
             }
         }

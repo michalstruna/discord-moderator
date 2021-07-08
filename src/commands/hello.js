@@ -4,7 +4,7 @@ module.exports = {
     name: 'hello',
     description: 'Send hello to chat.',
     args: [
-        { name: 'word', value: ['hello', 'hi', 'bye'], default: 'hello' },
+        { name: 'word', value: ['hello', 'hi', 'bye'], defaultValue: 'hello' },
         { name: 'age', value: Regex.Type.REAL },
         { name: 'name', value: Regex.Type.ANY, required: true },
     ],
