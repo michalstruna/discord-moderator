@@ -66,7 +66,7 @@ describe('parseArgs', () => {
 
     test('Rest args 2', () => {
         const rules = [{ name: 'test', value: ['a', 'b'] }]
-        const args = MessageService.parseArgs(['b', 'c'], rules) 
+        const args = MessageService.parseArgs(['b', 'c'], rules)
         expect(args).toEqual({ test: 'b', args: ['c'] })
     })
 
@@ -93,6 +93,14 @@ describe('parseArgs', () => {
         const rules = [{ name: 'test', value: /^[0-9]+$/, defaultValue: 'c' }]
         const args = MessageService.parseArgs(['d', '2', '3'], rules)
         expect(args).toEqual({ test: '2', args: ['d', '3'] })
+    })
+
+    test('Hello', () => {
+        const rules = [
+            { name: 'word', value: ['hello', 'hi', 'bye'], default: 'hello' },
+            { name: 'age', value: Regex.Type.REAL },
+            { name: 'name', value: Regex.Type.ANY, required: true },
+        ]
     })
 
 })

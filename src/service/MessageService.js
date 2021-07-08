@@ -21,40 +21,35 @@ exports.parseCommand = (text, prefix) => {
 }
 
 // TODO: rule.limit. One rule can consume multiple arguments.
-exports.parseArgs = (args, rules) => {
+exports.parseArgs = (args, rules = []) => {
     const named = {}
     const rest = []
     const usedRules = {}
 
-    for (const { name, value, required, defaultValue, parse } of rules) {
-        const test = arg => {
-            const argVal = parse ? parse(arg) : arg
-            const arrayOk = Array.isArray(value) && value.includes(argVal)
-            const regexOk = value instanceof RegExp && value.test(argVal)
-            const equalOk = (typeof value === 'string' || typeof value === 'number') && value === argVal
+    NEXT_ARG: for (const arg of args) {
+        for (const { name, value, parse } of rules) {
+            const arrayOk = Array.isArray(value) && value.includes(arg)
+            const regexOk = value instanceof RegExp && value.test(arg)
+            const equalOk = (typeof value === 'string' || typeof value === 'number') && value === arg
 
-            if (!usedRules[name]) {
+            if (!usedRules[name] && (arrayOk || regexOk || equalOk)) {
                 usedRules[name] = true
-
-                if (arrayOk || regexOk || equalOk) {
-                    named[name] = argVal
-                    return true
-                }
-    
-                if (defaultValue !== undefined) {
-                    named[name] = defaultValue
-                    return true
-                }
-    
-                if (required) {
-                    throw new InvalidInputError(`You have to specify **${name}**.`)
-                }
+                named[name] = parse ? parse(arg) : arg
+                continue NEXT_ARG
             }
         }
 
-        for (const arg of args) {
-            if (!test(arg)) {
-                rest.push(arg)
+        rest.push(arg)
+    }
+
+    for (const { name, required, defaultValue } of rules) {
+        if (!usedRules[name]) {
+            if (defaultValue) {
+                named[name] = defaultValue
+            } else {
+                if (required) {
+                    throw new InvalidInputError(`You have to specify **${name}**.`)
+                }
             }
         }
     }
