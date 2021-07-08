@@ -85,13 +85,13 @@ describe('parseArgs', () => {
     test('Named args default value 2', () => {
         const rules = [{ name: 'test', value: ['a', 'b'], defaultValue: 'c' }]
         const args = MessageService.parseArgs(['d'], rules) 
+        console.log(args)
         expect(args).toEqual({ test: 'c', args: ['d'] })
     })
 
     test('Named args regex', () => {
         const rules = [{ name: 'test', value: /^[0-9]+$/, defaultValue: 'c' }]
-        const args = MessageService.parseArgs(['d', '2', '3'], rules) 
-        console.log(args)
+        const args = MessageService.parseArgs(['d', '2', '3'], rules)
         expect(args).toEqual({ test: '2', args: ['d', '3'] })
     })
 

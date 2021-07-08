@@ -33,22 +33,23 @@ exports.parseArgs = (args, rules) => {
             const regexOk = value instanceof RegExp && value.test(argVal)
             const equalOk = (typeof value === 'string' || typeof value === 'number') && value === argVal
 
-            if (!usedRules[name] && (arrayOk || regexOk || equalOk)) {
-                named[name] = argVal
+            if (!usedRules[name]) {
                 usedRules[name] = true
-                return true
-            }
 
-            if (defaultValue !== undefined) {
-                named[name] = defaultValue
-                return false
+                if (arrayOk || regexOk || equalOk) {
+                    named[name] = argVal
+                    return true
+                }
+    
+                if (defaultValue !== undefined) {
+                    named[name] = defaultValue
+                    return true
+                }
+    
+                if (required) {
+                    throw new InvalidInputError(`You have to specify **${name}**.`)
+                }
             }
-
-            if (!required) {
-                return false
-            }
-
-            throw new InvalidInputError(`You have to specify **${name}**.`)
         }
 
         for (const arg of args) {
