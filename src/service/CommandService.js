@@ -1,5 +1,5 @@
 const MessageService = require('../service/MessageService')
-const { InvalidInputError } = require('../utils/Errors')
+const { InvalidInputError, NotFoundError } = require('../utils/Errors')
 
 const run = async (command, ...args) => {
     const [client, msg, { flags }, meta] = args
@@ -29,7 +29,8 @@ exports.execute = async (command, client, msg, args, meta) => {
     } catch (error) {
         console.error(error)
         MessageService.reactFail(msg)
-        MessageService.sendFail(msg.channel, error.message, error.title || 'Something bad happened', error.color)
+        const errTitle = error.title === undefined ? 'Something bad happened' : error.title
+        MessageService.sendFail(msg.channel, error.message, errTitle, error.color)
     }
 }
 
@@ -37,6 +38,6 @@ exports.getByName = name => {
     try {
         return require(`../commands/${name}.js`)
     } catch {
-        throw new InvalidInputError(`Command \`${name}\` was not found.`)
+        throw new NotFoundError(`Command \`${name}\` was not found.`)
     }
 }

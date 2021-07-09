@@ -13,3 +13,4 @@ const factory = (color, defaultTitle) => class extends Error {
 exports.InvalidInputError = factory(Color.RED, 'Invalid input')
 exports.UnauthorizedError = factory(Color.BLACK, 'Missing permissions')
 exports.ForbiddenError = factory(Color.ORANGE, 'Forbidden action')
+exports.NotFoundError = factory(Color.GRAY, null)
