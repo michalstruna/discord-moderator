@@ -1,21 +1,12 @@
 const MessageService = require('../service/MessageService')
 const { InvalidInputError } = require('../utils/Errors')
 
-const processCommandBranch = async (fun, args, msg) => {
-    const result = await fun(...args)
+const run = async (command, ...args) => {
+    const [client, msg, { flags }, meta] = args
 
-    if (result) {
-        result && MessageService.sendEmbeddedSuccess(msg.channel, result)
-    }
-}
-
-const run = async (...args) => {
-    const [command, client, msg, { flags }, meta] = args
-
-    for (const flag of flags) {
+    for (const flag in flags) {
         if (command.on[flag]) {
-            processCommandBranch(command.on[flag], args, msg)
-            return
+            return await command.on[flag](...args)
         }
     }
 
@@ -23,7 +14,7 @@ const run = async (...args) => {
         throw new InvalidInputError(`You need to specify action. Possible actions are: ${Object.keys(flags).map(f => `\`-${f}\``).join(',')}.`)
     }
 
-    processCommandBranch(command.on.run, args, msg)
+    return await command.on.run(...args)
 }
 
 exports.execute = async (command, client, msg, args, meta) => {

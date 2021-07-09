@@ -33,8 +33,9 @@ exports.parseArgs = (args, rules = []) => {
             const arrayOk = Array.isArray(value) && value.includes(arg.toLowerCase())
             const regexOk = value instanceof RegExp && value.test(arg.toLowerCase())
             const equalOk = (typeof value === 'string' || typeof value === 'number') && value === arg.toLowerCase()
+            const isNotFlag = !arg.startsWith('-')
 
-            if (!usedRules[name] && (arrayOk || regexOk || equalOk)) {
+            if (!usedRules[name] && isNotFlag && (arrayOk || regexOk || equalOk)) {
                 usedRules[name] = true
                 const tmp = arrayOk ? arg.toLowerCase() : arg
                 named[name] = parse ? parse(tmp) : tmp
