@@ -24,6 +24,7 @@ exports.parseCommand = (text, prefix) => {
 // TODO: rule.limit. One rule can consume multiple arguments.
 exports.parseArgs = (args, rules = []) => {
     const named = {}
+    const flags = {}
     const rest = []
     const usedRules = {}
 
@@ -41,7 +42,11 @@ exports.parseArgs = (args, rules = []) => {
             }
         }
 
-        rest.push(arg)
+        if (arg.startsWith('-')) {
+            flags[arg.substring(1)] = true
+        } else {
+            rest.push(arg)
+        }
     }
 
     for (const { name, required, defaultValue } of rules) {
@@ -56,5 +61,5 @@ exports.parseArgs = (args, rules = []) => {
         }
     }
 
-    return { ...named, args: rest }
+    return { ...named, flags, args: rest }
 }

@@ -50,49 +50,49 @@ describe('parseArgs', () => {
     test('No args', () => {
         const rules = []
         const args = MessageService.parseArgs([], rules)
-        expect(args).toEqual({ args: [] })
+        expect(args).toEqual({ args: [], flags: {} })
     })
 
     test('No parsed args', () => {
         const rules = [{ name: 'test', value: ['a', 'b'] }]
         const args = MessageService.parseArgs([], rules)
-        expect(args).toEqual({ args: [] })
+        expect(args).toEqual({ args: [], flags: {} })
     })
 
     test('Rest args', () => {
         const rules = [{ name: 'test', value: ['a', 'b'] }]
         const args = MessageService.parseArgs(['c'], rules) 
-        expect(args).toEqual({ args: ['c'] })
+        expect(args).toEqual({ args: ['c'], flags: {} })
     })
 
     test('Rest args 2', () => {
         const rules = [{ name: 'test', value: ['a', 'b'] }]
         const args = MessageService.parseArgs(['b', 'c'], rules)
-        expect(args).toEqual({ test: 'b', args: ['c'] })
+        expect(args).toEqual({ test: 'b', args: ['c'], flags: {} })
     })
 
     test('Rest args 3', () => {
         const rules = [{ name: 'test', value: ['a', 'b'] }]
         const args = MessageService.parseArgs(['b'], rules) 
-        expect(args).toEqual({ test: 'b', args: [] })
+        expect(args).toEqual({ test: 'b', args: [], flags: {} })
     })
 
     test('Named args default value', () => {
         const rules = [{ name: 'test', value: ['a', 'b'], defaultValue: 'c' }]
         const args = MessageService.parseArgs(['b'], rules) 
-        expect(args).toEqual({ test: 'b', args: [] })
+        expect(args).toEqual({ test: 'b', args: [], flags: {} })
     })
 
     test('Named args default value 2', () => {
         const rules = [{ name: 'test', value: ['a', 'b'], defaultValue: 'c' }]
         const args = MessageService.parseArgs(['d'], rules)
-        expect(args).toEqual({ test: 'c', args: ['d'] })
+        expect(args).toEqual({ test: 'c', args: ['d'], flags: {} })
     })
 
     test('Named args regex', () => {
         const rules = [{ name: 'test', value: /^[0-9]+$/, defaultValue: 'c' }]
         const args = MessageService.parseArgs(['d', '2', '3'], rules)
-        expect(args).toEqual({ test: '2', args: ['d', '3'] })
+        expect(args).toEqual({ test: '2', args: ['d', '3'], flags: {} })
     })
 
     test('Hello', () => {
@@ -115,7 +115,7 @@ describe('parseArgs', () => {
         ]
 
         const args = MessageService.parseArgs(['Michal'], rules)
-        expect(args).toEqual({ name: 'Michal', word: 'hello', args: [] })
+        expect(args).toEqual({ name: 'Michal', word: 'hello', args: [], flags: {} })
     })
 
     test('Hello 3', () => {
@@ -126,7 +126,22 @@ describe('parseArgs', () => {
         ]
 
         const args = MessageService.parseArgs(['Michal', 'Hi', '19'], rules)
-        expect(args).toEqual({ name: 'Michal', word: 'hi', age: '19', args: [] })
+        expect(args).toEqual({ name: 'Michal', word: 'hi', age: '19', args: [], flags: {} })
+    })
+
+    test('Only flag', () => {
+        const args = MessageService.parseArgs(['-rm'], [])
+        expect(args).toEqual({ args: [], flags: { rm: true } })
+    })
+
+    test('More flags', () => {
+        const args = MessageService.parseArgs(['-reset', '-rm', '-help'], [])
+        expect(args).toEqual({ args: [], flags: { reset: true, rm: true, help: true } })
+    })
+
+    test('Flags with args', () => {
+        const args = MessageService.parseArgs(['reset', '-rm', 'help', '-abc'], [{ name: 'test', value: /^.*$/ }])
+        expect(args).toEqual({ test: 'reset', args: ['help'], flags: { rm: true, abc: true } })
     })
 
 })

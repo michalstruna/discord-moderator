@@ -1,5 +1,4 @@
 const Regex = require('../utils/Regex')
-const Argument = require('../constants/Argument')
 const ServerService = require('../service/ServerService')
 const MessageService = require('../service/MessageService')
 const Config = require('../constants/Config')
@@ -9,10 +8,28 @@ module.exports = {
     name: 'prefix',
     description: 'Set prefix for server.',
     args: [
-        Argument.REMOVE,
-        { name: 'prefix', value: Regex.Type.ANY }
+        { name: 'prefix', value: Regex.Type.ANY, main: true }
     ],
-    async execute(client, msg, { prefix, remove }, { server }) {
+    on: {
+        async run(client, msg, { prefix }, { server }) {
+            if (prefix) {
+                await ServerService.updateById(msg.guild.id, { prefix: Config.DEFAULT_PREFIX })
+                return `Prefix for this server was set to default \`${Config.DEFAULT_PREFIX}\``
+            } else {
+                await ServerService.updateById(msg.guild.id, { prefix: Config.DEFAULT_PREFIX })
+                return `Prefix for this server is: \`${server.prefix}\`.`
+            }
+        },
+        async rm() {
+            await ServerService.updateById(msg.guild.id, { prefix: Config.DEFAULT_PREFIX })
+            return `Prefix for this server was set to default \`${Config.DEFAULT_PREFIX}\``
+        },
+        async help() {
+
+        }
+    },
+
+    async execute(client, msg, { prefix, flags: { rm } }, { server }) {
         if (prefix) {
             if (remove) {
                 await ServerService.updateById(msg.guild.id, { prefix: Config.DEFAULT_PREFIX })
@@ -28,8 +45,8 @@ module.exports = {
     }
 }
 
-/*
-CommandService.create('prefix', 'Set prefix for server', {
+
+/*module.exports = CommandService.create('prefix', 'Set prefix for server', {
     args: [
         { name: 'prefix', value: Regex.Type.ANY }
     ],
@@ -51,5 +68,4 @@ CommandService.create('prefix', 'Set prefix for server', {
     onEnd: (client, msg, { prefix, remove }, { server }) => {
 
     }
-})
-*/
+})*/
