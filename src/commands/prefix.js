@@ -21,9 +21,6 @@ module.exports = {
         async rm() {
             await ServerService.updateById(msg.guild.id, { prefix: Config.DEFAULT_PREFIX })
             MessageService.sendEmbeddedSuccess(msg.channel, `Prefix for this server was set to default \`${Config.DEFAULT_PREFIX}\``)
-        },
-        async help() {
-
         }
         
     }

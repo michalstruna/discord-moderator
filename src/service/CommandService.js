@@ -11,7 +11,7 @@ const run = async (command, ...args) => {
     }
 
     if (!command.on.run) {
-        throw new InvalidInputError(`You need to specify action. Possible actions are: ${Object.keys(flags).map(f => `\`-${f}\``).join(',')}.`)
+        throw new InvalidInputError(`You need to specify action. Possible actions are: ${Object.keys(command.on).map(f => `\`-${f}\``).join(',')}.`)
     }
 
     return await command.on.run(...args)
