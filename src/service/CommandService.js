@@ -29,6 +29,14 @@ exports.execute = async (command, client, msg, args, meta) => {
     } catch (error) {
         console.error(error)
         MessageService.reactFail(msg)
-        MessageService.sendEmbeddedFail(msg.channel, error.title || 'Something bad happened', error.message, error.color)
+        MessageService.sendFail(msg.channel, error.message, error.title || 'Something bad happened', error.color)
+    }
+}
+
+exports.getByName = name => {
+    try {
+        return require(`../commands/${name}.js`)
+    } catch {
+        throw new InvalidInputError(`Command \`${name}\` was not found.`)
     }
 }

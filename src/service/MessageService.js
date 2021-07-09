@@ -2,16 +2,31 @@ const Color = require('../constants/Color')
 const Emoji = require('../constants/Emoji')
 const { InvalidInputError } = require('../utils/Errors')
 
-exports.Emoji = Emoji
+const Theme = exports.Theme = {
+    SUCCESS: [Color.GREEN, Emoji.SUCCESS],
+    FAIL: [Color.RED, Emoji.FAIL],
+    INFO: [Color.BLUE, Emoji.INFO]
+}
 
-exports.react = (msg, emoji) => msg.react(emoji)
-exports.reactSuccess = msg => exports.react(msg, Emoji.SUCCESS)
-exports.reactFail = msg => exports.react(msg, Emoji.FAIL)
+const react = exports.react = (msg, emoji) => msg.react(emoji)
+const reactSuccess = exports.reactSuccess = msg => exports.react(msg, Emoji.SUCCESS)
+const reactFail = exports.reactFail = msg => exports.react(msg, Emoji.FAIL)
 
-exports.sendEmbedded = (channel, data = {}) => channel.send({ embed: data })
-exports.sendEmbeddedSuccess = (channel, description) => exports.sendEmbedded(channel, { description: Emoji.SUCCESS + ' ' + description, color: Color.GREEN })
-exports.sendEmbeddedFail = (channel, title, description, color = Color.RED) => exports.sendEmbedded(channel, { title, description, color })
-exports.sendEmbeddedInfo = (channel, description) => exports.sendEmbedded(channel, { description: Emoji.INFO + ' ' + description, color: Color.BLUE })
+const send = exports.send = (channel, data = {}, [color, emoji] = Theme.INFO) => {
+    const embed = { ...data, color: data.color || color }
+
+    if (embed.title) {
+        embed.title = emoji + ' ' + embed.title
+    } else {
+        embed.description = emoji + ' ' + embed.description
+    }
+
+    channel.send({ embed })
+}
+
+exports.sendSuccess = (channel, description, title, color) => send(channel, { description, title, color }, Theme.SUCCESS)
+exports.sendFail = (channel, description, title, color) => send(channel, { description, title, color }, Theme.FAIL)
+exports.sendInfo = (channel, description, title, color) => send(channel, { description, title, color })
 
 exports.parseCommand = (text, prefix) => {
     const prefixRegex = new RegExp(`^\\${prefix} *`)

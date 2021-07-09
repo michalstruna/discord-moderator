@@ -13,14 +13,14 @@ module.exports = {
         async run(client, msg, { prefix }, { server }) {
             if (prefix) {
                 await ServerService.updateById(msg.guild.id, { prefix })
-                MessageService.sendEmbeddedSuccess(msg.channel, `Prefix for this server was set to \`${prefix}\``)
+                MessageService.sendSuccess(msg.channel, `Prefix for this server was set to \`${prefix}\``)
             } else {
-                MessageService.sendEmbeddedInfo(msg.channel, `Prefix for this server is \`${server.prefix}\`.`)
+                MessageService.sendInfo(msg.channel, `Prefix for this server is \`${server.prefix}\`.`)
             }
         },
         async rm() {
             await ServerService.updateById(msg.guild.id, { prefix: Config.DEFAULT_PREFIX })
-            MessageService.sendEmbeddedSuccess(msg.channel, `Prefix for this server was set to default \`${Config.DEFAULT_PREFIX}\``)
+            MessageService.sendSuccess(msg.channel, `Prefix for this server was set to default \`${Config.DEFAULT_PREFIX}\``)
         }
         
     }
