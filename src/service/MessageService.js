@@ -44,7 +44,7 @@ exports.parseArgs = (args, rules = []) => {
     const usedRules = {}
 
     NEXT_ARG: for (const arg of args) {
-        for (const { name, value, parse } of rules) {
+        for (const { name, value, parse, flag } of rules) {
             const arrayOk = Array.isArray(value) && value.includes(arg.toLowerCase())
             const regexOk = value instanceof RegExp && value.test(arg.toLowerCase())
             const equalOk = (typeof value === 'string' || typeof value === 'number') && value === arg.toLowerCase()
@@ -54,6 +54,11 @@ exports.parseArgs = (args, rules = []) => {
                 usedRules[name] = true
                 const tmp = arrayOk ? arg.toLowerCase() : arg
                 named[name] = parse ? parse(tmp) : tmp
+
+                if (flag) {
+                    flags[flag] = true
+                }
+
                 continue NEXT_ARG
             }
         }

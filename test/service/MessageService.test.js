@@ -144,4 +144,6 @@ describe('parseArgs', () => {
         expect(args).toEqual({ test: 'reset', args: ['help'], flags: { rm: true, abc: true } })
     })
 
+    // TODO: Test flag named arguments.
+
 })

@@ -7,18 +7,17 @@ module.exports = {
     name: 'prefix',
     description: 'Set prefix for server.',
     args: [
-        { name: 'prefix', value: Regex.Type.ANY, main: true }
+        { name: 'prefix', value: Regex.Type.ANY, flag: 'set' }
     ],
     on: {
         async run(client, msg, { prefix }, { server }) {
-            if (prefix) {
-                await ServerService.updateById(msg.guild.id, { prefix })
-                MessageService.sendSuccess(msg.channel, `Prefix for this server was set to \`${prefix}\``)
-            } else {
-                MessageService.sendInfo(msg.channel, `Prefix for this server is \`${server.prefix}\`.`)
-            }
+            MessageService.sendInfo(msg.channel, `Prefix for this server is \`${server.prefix}\`.`)
         },
-        async rm() {
+        async set(client, msg, { prefix }) {
+            await ServerService.updateById(msg.guild.id, { prefix })
+            MessageService.sendSuccess(msg.channel, `Prefix for this server was set to \`${prefix}\``)
+        },
+        async rm(client, msg) {
             await ServerService.updateById(msg.guild.id, { prefix: Config.DEFAULT_PREFIX })
             MessageService.sendSuccess(msg.channel, `Prefix for this server was set to default \`${Config.DEFAULT_PREFIX}\``)
         }
