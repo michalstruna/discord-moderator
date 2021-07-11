@@ -1,46 +1,37 @@
 const Regex = require('../utils/Regex')
 const MessagesService = require('../service/MessageService')
+const UserService = require('../service/UserService')
 const { NotFoundError } = require('../utils/Errors')
 
-
-const help = (client, msg, args, { server: { prefix } }) => `
-Simple command for sending hello into chat. Its main purpose is to test if bot is working.
-
-Alliases: *hello*, *hi*
-
-**Send hello** - \`${prefix}hello [@user?] [#channel?]\`
-> \`user\` - The user you wants to greet. *(default yourself)*
-> \`channel\` - The channel where you want to greet. *(default current channel)*
-> 
-> **Examples**
-> \`${prefix}hello\` - Send hello to current channel to yourself.
-> \`${prefix}hi @Michal #general\` - Send hello to general chat to Michal.
-`
-
 const renderHelp = (command, ...args) => {
-    const [client, msg, cmdArgs, { server: { prefix } }] = args
+    const [client, msg, cmdArgs, { server: { prefix, commands } }] = args
+    const commandData = commands[command.names[0]]
 
     let result = ''
     result += `${command.description}\n\n`
     result += `**Alliases**: ${command.names.map(c => `\`${prefix}${c}\``).join(', ')}`
-    result += `\n\n`
+    result += `\n`
 
     const help = command.help ? command.help(...args) : null
 
-    if (help && help.useCases) {
-        for (const useCase of help.useCases) {
-            result += `**${useCase.name}** - \`${prefix}${useCase.pattern}\`\n`
+    if (help && help.actions) {
+        for (const action of help.actions) {
+            const actionData = commandData[action.key]
+            result += `\n**${action.name}** (\`${prefix}${action.pattern}\`)\n`
             
-            for (const arg of useCase.args) {
-                result += `> \`${prefix}${arg.name}\` - ${arg.description}\n`
+            for (const arg of action.args) {
+                result += `> \`${prefix}${arg.name}\` - ${arg.description}${arg.default ? ` (default ${arg.default})` : ''}\n`
             }
     
             result += '> \n'
             result += '> **Examples**\n'
     
-            for (const example of useCase.examples) {
+            for (const example of action.examples) {
                 result += `> \`${prefix}${example.pattern}\` - ${example.description}\n`
             }
+
+            result += '> \n'
+            result += `> **Required role**: ${actionData.roles.length > 0 ? UserService.rolesToString(actionData.roles) : '@everyone'}\n`
         }
     }
 
@@ -48,7 +39,7 @@ const renderHelp = (command, ...args) => {
 }
 
 module.exports = {
-    name: 'help',
+    name: ['help', 'h', '?', 'man'],
     description: 'Show help.',
     args: [
         { name: 'commandName', value: Regex.Type.ANY }
@@ -64,7 +55,6 @@ module.exports = {
                     throw new NotFoundError(`Command \`${commandName}\` was not found.`)
                 }
 
-                console.log(command)
                 MessagesService.sendInfo(msg.channel, renderHelp(command, ...args), `Help • ${command.names[0]}`)
             } else {
                 MessagesService.sendInfo(msg.channel, ``, 'Help')

@@ -1,6 +1,7 @@
 const help = () => ({
-    useCases: [
+    actions: [
         {
+            key: 'run',
             name: 'Send hello',
             pattern: 'hello [@user?] [#channel?]',
             args: [
@@ -16,7 +17,7 @@ const help = () => ({
 })
 
 module.exports = {
-    name: ['hello', 'hi', 'hola'],
+    name: ['hello', 'hi'],
     description: 'Simple command for sending hello into chat. Its main purpose is to test if bot is working.',
     help,
     on: {
