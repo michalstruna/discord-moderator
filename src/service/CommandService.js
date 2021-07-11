@@ -2,14 +2,17 @@ const MessageService = require('./MessageService')
 const UserService = require('./UserService')
 const { InvalidInputError, NotFoundError, UnauthorizedError } = require('../utils/Errors')
 
-const checkPerms = (command, actionName, member, server) => {
-    if (!server.commands || !server.commands[command.name] || !server.commands[command.name].actions[actionName]) {
-        throw new UnauthorizedError(`You need to specify admin and mod roles using \`${server.prefix}perms @Admin @Mod\` command.`)
+const checkPerms = (command, actionName, msg, server) => {
+    const commandData = server.commands[command.name]
+
+    if (!commandData || commandData[actionName] || commandData[actionName].roles === 0) {
+        MessageService.sendInfo(msg.channel, `You didn't specity command permissions, so everyone can use all commands. For more help type \`${server.prefix}help perms\`.`)
+        return
     }
 
-    const reqRoles = server.commands[command.name].actions[actionName].roles
+    const reqRoles = commandData.actions[actionName].roles
 
-    if (reqRoles.length > 0 && !UserService.hasRole(member, ...reqRoles)) {
+    if (reqRoles.length > 0 && !UserService.hasRole(msg.member, ...reqRoles)) {
         throw new UnauthorizedError(`You need to be ${UserService.rolesToString(reqRoles)}`)
     }
 }
@@ -19,7 +22,7 @@ const run = async (command, ...args) => {
 
     for (const flag in flags) {
         if (command.on[flag]) {
-            checkPerms(command, flag, msg.member, server)
+            checkPerms(command, flag, msg, server)
             return await command.on[flag](...args)
         }
     }
@@ -28,7 +31,7 @@ const run = async (command, ...args) => {
         throw new InvalidInputError(`You need to specify action. Possible actions are: ${Object.keys(command.on).map(f => `\`-${f}\``).join(',')}.`)
     }
 
-    checkPerms(command, 'run', msg.member, server)
+    checkPerms(command, 'run', msg, server)
     return await command.on.run(...args)
 }
 
