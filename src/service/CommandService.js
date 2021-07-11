@@ -6,7 +6,7 @@ const checkPerms = (command, actionName, msg, server) => {
     const commandData = server.commands[command.name]
 
     if (!commandData || commandData[actionName] || commandData[actionName].roles === 0) {
-        MessageService.sendInfo(msg.channel, `You didn't specity command permissions, so everyone can use all commands. For more help type \`${server.prefix}help perms\`.`)
+        MessageService.sendInfo(msg.channel, `You didn't specify command permissions, so everyone can use all commands. For more help type \`${server.prefix}help perms\`.`)
         return
     }
 
@@ -49,13 +49,5 @@ exports.execute = async (command, client, msg, args, meta) => {
         MessageService.reactFail(msg)
         const errTitle = error.title === undefined ? 'Something bad happened' : error.title
         MessageService.sendFail(msg.channel, error.message, errTitle, error.color)
-    }
-}
-
-exports.getByName = name => {
-    try {
-        return require(`../commands/${name}.js`)
-    } catch {
-        throw new NotFoundError(`Command \`${name}\` was not found.`)
     }
 }

@@ -9,11 +9,11 @@ module.exports = client => {
 
         if (Array.isArray(command.name)) {
             for (const n of command.name) {
-                const cmd = { ...command, name: n }
+                const cmd = { ...command, name: n, names: command.name }
                 client.commands.set(n, cmd)
             }
         } else {
-            client.commands.set(command.name, command)
+            client.commands.set(command.name, { ...command, names: [command.name] })
         }
     }
 }
