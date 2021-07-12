@@ -1,11 +1,65 @@
+const fs = require('fs')
+const path = require('path')
+
 const MessageService = require('./MessageService')
 const UserService = require('./UserService')
-const { InvalidInputError, NotFoundError, UnauthorizedError } = require('../utils/Errors')
+const ServerService = require('./ServerService')
+const { InvalidInputError, UnauthorizedError } = require('../utils/Errors')
 
-const checkPerms = (command, actionName, msg, server) => {
+const commands = new Map()
+const aliases = new Map()
+
+exports.load = () => {
+    commands.clear()
+    aliases.clear()
+
+    const files = fs.readdirSync(path.join(__dirname, '..', 'commands'))
+
+    for (const file of files) {
+        const command = require(`../commands/${file}`)
+        commands.set(command.name[0], command)
+    
+        for (const n of command.name) {
+            aliases.set(n, command.name[0])
+        }
+    }
+}
+
+exports.getByAlias = alias => {
+    const name = aliases.get(alias)
+    return name ? commands.get(name) : null
+}
+
+const initialize = async (client, server) => {
+    const serverCommands = JSON.parse(JSON.stringify(server.commands))
+
+    for (const [name, command] of commands) {
+        let serverCommand = serverCommands[name]
+
+        if (!serverCommand) {
+            serverCommand = serverCommands[name] = { actions: {} }
+        }
+
+        for (const actionName in command.on) {
+            let serverAction = serverCommand.actions[actionName]
+
+            if (!serverAction) {
+                serverCommand.actions[actionName] = { roles: [] } // TODO: Roles.
+            }
+        }
+    }
+
+    await ServerService.updateById(server.id, { commands: serverCommands })
+}
+
+const checkPerms = async (client, command, actionName, msg, server) => {
     const commandData = server.commands[command.name]
 
-    if (!commandData || commandData[actionName] || commandData[actionName].roles === 0) {
+    if (!commandData || !commandData.actions[actionName]) {
+        await initialize(client, server)
+    }
+
+    if (server.roles) {
         MessageService.sendInfo(msg.channel, `You didn't specify command permissions, so everyone can use all commands. For more help type \`${server.prefix}help perms\`.`)
         return
     }
@@ -22,7 +76,7 @@ const run = async (command, ...args) => {
 
     for (const flag in flags) {
         if (command.on[flag]) {
-            checkPerms(command, flag, msg, server)
+            await checkPerms(client, command, flag, msg, server)
             return await command.on[flag](...args)
         }
     }
@@ -31,7 +85,7 @@ const run = async (command, ...args) => {
         throw new InvalidInputError(`You need to specify action. Possible actions are: ${Object.keys(command.on).map(f => `\`-${f}\``).join(',')}.`)
     }
 
-    checkPerms(command, 'run', msg, server)
+    await checkPerms(client, command, 'run', msg, server)
     return await command.on.run(...args)
 }
 

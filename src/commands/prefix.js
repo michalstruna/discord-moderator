@@ -5,7 +5,7 @@ const Config = require('../constants/Config')
 const Role = require('../constants/Role')
 
 module.exports = {
-    name: 'prefix',
+    name: ['prefix'],
     description: 'Set prefix for server.',
     args: [
         { name: 'prefix', value: Regex.Type.ANY, flag: 'set' }

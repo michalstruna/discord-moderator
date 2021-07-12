@@ -1,22 +1,24 @@
 const Regex = require('../utils/Regex')
 const MessagesService = require('../service/MessageService')
 const UserService = require('../service/UserService')
+const CommandService = require('../service/CommandService')
 const { NotFoundError } = require('../utils/Errors')
 
 const renderHelp = (command, ...args) => {
     const [client, msg, cmdArgs, { server: { prefix, commands } }] = args
-    const commandData = commands[command.names[0]]
+    const commandData = commands.get(command.name[0])
 
     let result = ''
     result += `${command.description}\n\n`
-    result += `**Alliases**: ${command.names.map(c => `\`${prefix}${c}\``).join(', ')}`
+    result += `**Aliases**: ${command.name.map(c => `\`${prefix}${c}\``).join(', ')}`
     result += `\n`
 
     const help = command.help ? command.help(...args) : null
 
     if (help && help.actions) {
         for (const action of help.actions) {
-            const actionData = commandData[action.key]
+            const actionData = commandData.actions.get(action.key)
+
             result += `\n**${action.name}** (\`${prefix}${action.pattern}\`)\n`
             
             for (const arg of action.args) {
@@ -49,13 +51,13 @@ module.exports = {
             const [client, msg, { commandName }] = args
 
             if (commandName) {
-                const command = client.commands.get(commandName)
+                const command = CommandService.getByAlias(commandName)
 
                 if (!command) {
                     throw new NotFoundError(`Command \`${commandName}\` was not found.`)
                 }
 
-                MessagesService.sendInfo(msg.channel, renderHelp(command, ...args), `Help • ${command.names[0]}`)
+                MessagesService.sendInfo(msg.channel, renderHelp(command, ...args), `Help • ${command.name[0]}`)
             } else {
                 MessagesService.sendInfo(msg.channel, ``, 'Help')
             }

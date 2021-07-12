@@ -29,17 +29,16 @@ connect(process.env.DB_HOST, {
 const Id = String
 
 const CommandAction = new Schema({
-    name: { type: String, required: true },
     roles: { type: [Id], required: true, default: [] }
 })
 
 const Command = new Schema({
-    name: { type: String, required: true },
     actions: { type: Map, of: CommandAction, required: true, default: {} }
 })
 
 exports.Server = model('Server', new Schema({
     id: { type: Id, required: true, index: true },
     prefix: { type: String, required: true, default: Config.DEFAULT_PREFIX },
-    commands: { type: Map, of: Command, required: true, default: {} }
+    commands: { type: Map, of: Command, required: true, default: {} },
+    roles: { type: Map, of: Id, required: false, default: {} }
 }))

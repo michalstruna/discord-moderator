@@ -7,9 +7,6 @@ const Buttons = require('discord-buttons')
 const client = new Discord.Client()
 Buttons(client)
 
-client.commands = new Discord.Collection()
-client.events = new Discord.Collection()
-
 for (const handler of ['command', 'event']) {
     require(`./handlers/${handler}`)(client)
 }
