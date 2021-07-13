@@ -40,7 +40,7 @@ const initialize = async (client, server) => {
             serverCommand = serverCommands[name] = { actions: {} }
         }
 
-        for (const actionName in command.on) {
+        for (const actionName in command.actions) {
             let serverAction = serverCommand.actions[actionName]
 
             if (!serverAction) {
@@ -53,7 +53,7 @@ const initialize = async (client, server) => {
 }
 
 const checkPerms = async (client, command, actionName, msg, server) => {
-    const commandData = server.commands[command.name]
+    const commandData = server.commands[command.name[0]]
 
     if (!commandData || !commandData.actions[actionName]) {
         await initialize(client, server)
@@ -75,18 +75,18 @@ const run = async (command, ...args) => {
     const [client, msg, { flags }, { server }] = args
 
     for (const flag in flags) {
-        if (command.on[flag]) {
+        if (command.actions[flag]) {
             await checkPerms(client, command, flag, msg, server)
-            return await command.on[flag](...args)
+            return await command.actions[flag].execute(...args)
         }
     }
 
-    if (!command.on.run) {
-        throw new InvalidInputError(`You need to specify action. Possible actions are: ${Object.keys(command.on).map(f => `\`-${f}\``).join(',')}.`)
+    if (!command.actions.run) {
+        throw new InvalidInputError(`You need to specify action. Possible actions are: ${Object.keys(command.actions).map(f => `\`-${f}\``).join(',')}.`)
     }
 
     await checkPerms(client, command, 'run', msg, server)
-    return await command.on.run(...args)
+    return await command.actions.run.execute(...args)
 }
 
 exports.execute = async (command, client, msg, args, meta) => {
