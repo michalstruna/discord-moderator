@@ -18,10 +18,7 @@ module.exports = {
                     { name: 'user', description: 'The user you wants to greet', default: 'yourself' },
                     { name: 'channel', description: 'The channel where you want to greet', default: 'current channel' }
                 ],
-                examples: [
-                    { pattern: 'hello', description: 'Send hello to current channel to yourself.' },
-                    { pattern: 'hi @Michal #general', description: 'Send hello to general chat to Michal.' }
-                ]
+                examples: ['hello', 'hi @Michal #general']
             }
         }
     }

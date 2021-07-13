@@ -23,29 +23,26 @@ const renderHelp = (command, ...args) => {
         }
 
         const actionData = commandData.actions.get(key)
-        result += `\n**${doc.name}** (\`${prefix}${doc.pattern}\`)\n`
+        result += `\n**${doc.name}** • \`${prefix}${doc.pattern}\`\n`
         
         for (const arg of doc.args || []) {
             result += `> \`${arg.name}\` - ${arg.description}${arg.default ? ` (default ${arg.default})` : ''}\n`
         }
 
-        if (doc.examples) {
-            result += '\n> **Examples**\n'
+        result += '> \n'
 
-            for (const example of doc.examples) {
-                result += `> \`${prefix}${example.pattern}\` - ${example.description}\n`
-            }
+        if (doc.examples) {
+            result += `> **Examples**: ${doc.examples.map(e => `\`${prefix}${e}\``).join(' • ')}\n`
         }
 
-        result += '> \n'
-        result += `> **Required role**: ${actionData.roles.length > 0 ? UserService.rolesToString(actionData.roles) : '@everyone'}\n`
+        result += `> **Can use**: ${actionData.roles.length > 0 ? UserService.rolesToString(actionData.roles) : '@everyone'}\n`
     }
 
     return result
 }
 
 module.exports = {
-    name: ['help', 'h', '?', 'man'],
+    name: ['help', 'h', '?', 'man', 'doc'],
     description: 'Show help.',
     args: [
         { name: 'commandName', value: Regex.Type.ANY }
@@ -67,7 +64,16 @@ module.exports = {
                     MessagesService.sendInfo(msg.channel, ``, 'Help')
                 }  
             },
-            perms: Role.MEMBER
+            perms: Role.MEMBER,
+            doc: {
+                name: 'Show general help',
+                pattern: 'help [category?] [command?]',
+                args: [
+                    { name: 'category', description: 'One of \`config\`, \`server\`, \`mod\` or \`nsfw\`.', default: 'config' },
+                    { name: 'command', description: 'If specified, detail of command will be displayed.' }
+                ],
+                examples: ['help', 'help mod']
+            }
         }
     }
 }
