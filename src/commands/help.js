@@ -26,14 +26,15 @@ const renderHelp = (command, ...args) => {
         result += `\n**${doc.name}** (\`${prefix}${doc.pattern}\`)\n`
         
         for (const arg of doc.args || []) {
-            result += `> \`${prefix}${arg.name}\` - ${arg.description}${arg.default ? ` (default ${arg.default})` : ''}\n`
+            result += `> \`${arg.name}\` - ${arg.description}${arg.default ? ` (default ${arg.default})` : ''}\n`
         }
 
-        result += '> \n'
-        result += '> **Examples**\n'
+        if (doc.examples) {
+            result += '\n> **Examples**\n'
 
-        for (const example of doc.examples || []) {
-            result += `> \`${prefix}${example.pattern}\` - ${example.description}\n`
+            for (const example of doc.examples) {
+                result += `> \`${prefix}${example.pattern}\` - ${example.description}\n`
+            }
         }
 
         result += '> \n'

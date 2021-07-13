@@ -18,10 +18,7 @@ module.exports = {
             perms: Role.MEMBER,
             doc: {
                 name: 'Show current prefix',
-                pattern: 'prefix',
-                examples: [
-                    { pattern: 'prefix', description: 'Show current prefix.' }
-                ]
+                pattern: 'prefix'
             }
         },
         set: {
@@ -51,7 +48,7 @@ module.exports = {
                 name: 'Reset prefix to default',
                 pattern: 'prefix -rm',
                 examples: [
-                    { pattern: 'prefix -rm', description: `Reset prefix to default ${Config.DEFAULT_PREFIX}.` }
+                    { pattern: 'prefix -rm', description: `Reset prefix to default \`${Config.DEFAULT_PREFIX}\`.` }
                 ]
             }
         }
