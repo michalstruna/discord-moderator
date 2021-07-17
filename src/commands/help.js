@@ -42,7 +42,7 @@ const renderHelp = (command, ...args) => {
 }
 
 module.exports = {
-    name: ['help', 'h', '?', 'man', 'doc'],
+    name: ['help', 'h', '?', 'man', 'doc', 'commands', 'command', 'cmd'],
     description: 'Show help.',
     args: [
         { name: 'commandName', value: Regex.Type.ANY }

@@ -14,3 +14,5 @@ for (const handler of ['command', 'event']) {
 client.login(process.env.TOKEN).then(async () => {
 
 })
+
+// TODO: Commando: https://discord.js.org/#/docs/commando/master/general/welcome
