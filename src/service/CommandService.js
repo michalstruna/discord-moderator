@@ -13,21 +13,25 @@ exports.load = () => {
     commands.clear()
     aliases.clear()
 
-    const files = fs.readdirSync(path.join(__dirname, '..', 'commands'))
+    const categories = fs.readdirSync(path.join(__dirname, '..', 'commands'))
 
-    for (const file of files) {
-        const command = require(`../commands/${file}`)
-        commands.set(command.name[0], command)
-    
-        for (const n of command.name) {
-            aliases.set(n, command.name[0])
+    for (const category of categories) {
+        const files = fs.readdirSync(path.join(__dirname, '..', 'commands', category))
+
+        for (const file of files) {
+            const command = require(`../commands/${category}/${file}`)
+            command.category = category
+            commands.set(command.name, command)
+        
+            for (const alias of command.aliases || []) {
+                aliases.set(alias, command.name)
+            }
         }
     }
 }
 
 exports.getByAlias = alias => {
-    const name = aliases.get(alias)
-    return name ? commands.get(name) : null
+    return commands.get(aliases.get(alias) || alias)
 }
 
 const initialize = async (client, server) => {
