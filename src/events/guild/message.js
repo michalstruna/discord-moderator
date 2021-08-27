@@ -11,7 +11,7 @@ module.exports = async (client, msg) => {
     if (!msg.content.startsWith(server.prefix)) return // Ignore non-command messages.
 
     const [commandName, args] = MessageService.parseCommand(msg.content, server.prefix)
-    const command = CommandService.getByAlias(commandName)
+    const command = CommandService.getByName(commandName)
 
     if (command) {
         CommandService.execute(command, client, msg, args, { server })

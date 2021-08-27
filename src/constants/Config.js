@@ -1,3 +1,4 @@
 module.exports = {
-    DEFAULT_PREFIX: '>'
+    DEFAULT_PREFIX: '>',
+    MAX_PREFIX_LENGTH: 10
 }
