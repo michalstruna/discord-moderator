@@ -30,7 +30,7 @@ exports.sendFail = (channel, description, title, color) => send(channel, { descr
 exports.sendInfo = (channel, description, title, color) => send(channel, { description, title, color })
 
 exports.parseCommand = (text, prefix) => {
-    const prefixRegex = new RegExp(`^\\${prefix} *`)
+    const prefixRegex = new RegExp(`^${prefix} *`)
     const args = text.trim().replace(prefixRegex, '').split(/ +/)
     const commandName = prefixRegex.test(text) ? args.shift().toLowerCase() : null
 
@@ -64,7 +64,7 @@ exports.parseArgs = (args, rules = []) => {
         }
 
         if (tmpArgs.length > 0 && tmpRules.length === 0) { // There are no rules, but still some args.
-            throw new InvalidInputError(`Unknown arguments: \`${tmpArgs.join(' ')}\``)
+            throw new InvalidInputError(`Unknown arguments: \`${tmpArgs.join('`, `')}\``)
         }
 
         if (tmpRules[0].pattern.test(tmpArgs[0])) { // Consume rule and argument.

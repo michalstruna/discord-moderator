@@ -8,6 +8,7 @@ module.exports = async (client, msg) => {
     const server = await ServerService.getById(msg.guild.id)
 
     msg.content = msg.content.trim()
+
     if (!msg.content.startsWith(server.prefix)) return // Ignore non-command messages.
 
     const [commandName, args] = MessageService.parseCommand(msg.content, server.prefix)
