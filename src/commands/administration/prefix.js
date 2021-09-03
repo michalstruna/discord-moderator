@@ -24,7 +24,7 @@ module.exports = {
         },
         {
             args: [
-                { name: '-reset', pattern: Pattern.FLAG('-reset'), required: true, description: 'New prefix (max. length 10).' }
+                { name: '-reset', pattern: Pattern.FLAG('-reset'), required: true }
             ],
             allowRoles: [Role.ADMIN],
             execute: async (client, msg) => {
@@ -32,16 +32,14 @@ module.exports = {
                 MessageService.sendSuccess(msg.channel, `Prefix for this server was reset to \`${Config.DEFAULT_PREFIX}\``)
             },
             description: `Reset prefix to default ${Config.DEFAULT_PREFIX}.`,
-            pattern: 'prefix -reset',
-            examples: ['prefix -reset']
+            pattern: 'prefix -reset'
         },
         {
             execute: async (client, msg, args, { server }) => {
                 MessageService.sendInfo(msg.channel, `Current prefix: \`${server.prefix}\``)
             },
             description: 'Show current prefix.',
-            pattern: 'prefix',
-            examples: ['prefix'],
+            pattern: 'prefix'
         }
     ]
 }

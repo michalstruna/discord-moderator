@@ -31,6 +31,10 @@ exports.getByName = name => {
     return commands.get(aliases.get(name) || name)
 }
 
+exports.getAll = () => {
+    return Array.from(commands.values())
+}
+
 const findAction = (actions, args) => {
     const errors = []
 
