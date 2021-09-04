@@ -1,4 +1,4 @@
-const { MentionNotFound } = require('../utils/Errors')
+const { MentionNotFoundError: MentionNotFound } = require('../utils/Errors')
 
 class Pattern {
 

@@ -9,24 +9,26 @@ module.exports = {
     description: 'Set perms roles.',
     actions: [
         {
+            name: 'set',
             args: [
                 { name: 'admin', pattern: Pattern.ROLE, required: true, description: 'Admin role.' },
                 { name: 'mod', pattern: Pattern.ROLE, required: false, description: 'Mod role.' },
                 { name: 'member', pattern: Pattern.ROLE, required: false, description: 'Member role.' }
             ],
-            allowRoles: [Role.ADMIN],
+            roles: [Role.ADMIN],
             execute: async (client, msg, { admin, mod, member }) => {
                 mod = mod || msg.guild.roles.everyone
                 member = member || msg.guild.roles.everyone
 
-                await ServerService.updateById(msg.guild.id, { roles: { [Role.ADMIN]: admin.id, [Role.MOD]: mod.id, [Role.MEMBER]: member.id } })
+                await ServerService.setPerms(msg.guild.id, { [Role.ADMIN]: admin.id, [Role.MOD]: mod.id, [Role.MEMBER]: member.id }, msg.guild)
                 MessageService.sendSuccess(msg.channel, `Admin (${admin}), mod (${mod}) and member (${member}) roles were set.`)
             },
             description: 'Set perm roles for commands.',
             examples: [['@Admin', '@Moderator', '@Member'], ['@Admin']]
         },
         {
-            allowRoles: [Role.ADMIN],
+            name: 'get',
+            roles: [Role.ADMIN],
             execute: async (client, msg, args, { server }) => {
                 const roles = [
                     ['Admin', Role.ADMIN],

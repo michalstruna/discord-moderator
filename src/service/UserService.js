@@ -1,11 +1,11 @@
 exports.hasRole = (member, ...roles) => {
-    for (const role of member.roles) {
-        if (roles.includes(role.id)) {
+    for (const role of roles) {
+        if (member.roles.cache.has(role)) {
             return true
         }
     }
 
-    return true
+    return false
 }
 
 const getRoleMention = exports.getRoleMention = roleId => `<@&${roleId}>`

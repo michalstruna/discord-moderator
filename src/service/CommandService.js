@@ -1,7 +1,10 @@
 const fs = require('fs')
 const path = require('path')
+const { MissingPermissionsError } = require('../utils/Errors')
 
 const MessageService = require('./MessageService')
+const UserService = require('./UserService')
+const { role, list } = require('../utils/Outputs')
 
 const commands = new Map()
 const aliases = new Map()
@@ -25,6 +28,22 @@ exports.load = () => {
             }
         }
     }
+}
+
+exports.exportAll = (roles, guild) => {
+    const result = {}
+
+    commands.forEach(command => {
+        const actions = {}
+
+        command.actions.forEach(action => {
+            actions[action.name] = { roles: action.roles ? action.roles.map(r => roles[r]) : guild.roles.everyone.id }
+        })
+
+        result[command.name] = { actions }
+    })
+
+    return result
 }
 
 exports.getByName = name => {
@@ -54,8 +73,13 @@ exports.execute = async (command, client, msg, args, meta) => {
     try {
         console.log(`command: ${msg.content}`, args)
         const [action, parsedArgs] = await findAction(command.actions, args, meta)
-        // TODO: Check perms
-        await action.execute(client, msg, parsedArgs, meta)
+        const reqRoles = meta.server.commands.get(command.name).actions.get(action.name).roles
+
+        if (UserService.hasRole(msg.member, ...reqRoles)) {
+            await action.execute(client, msg, parsedArgs, meta)
+        } else {
+            throw new MissingPermissionsError(`${msg.member} needs to be ${list(reqRoles.map(role))}.`)
+        }
 
         if (action.react !== false) {
             MessageService.reactSuccess(msg)

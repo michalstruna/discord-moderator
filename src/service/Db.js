@@ -33,7 +33,8 @@ const CommandAction = new Schema({
 })
 
 const Command = new Schema({
-    actions: { type: Map, of: CommandAction, required: true, default: {} }
+    actions: { type: Map, of: CommandAction, required: true, default: {} },
+    enabled: { type: Boolean, required: true, default: true }
 })
 
 exports.Server = model('Server', new Schema({
