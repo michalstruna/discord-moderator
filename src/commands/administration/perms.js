@@ -23,8 +23,7 @@ module.exports = {
                 MessageService.sendSuccess(msg.channel, `Admin (${admin}), mod (${mod}) and member (${member}) roles were set.`)
             },
             description: 'Set perm roles for commands.',
-            pattern: 'perms [admin] [mod?] [member?]',
-            examples: ['perms @Admin @Moderator @Member', 'perms @Admin']
+            examples: [['@Admin', '@Moderator', '@Member'], ['@Admin']]
         },
         {
             allowRoles: [Role.ADMIN],
@@ -37,8 +36,7 @@ module.exports = {
 
                 MessageService.sendInfo(msg.channel, roles, 'Global perms')
             },
-            description: 'Show global perms settings.',
-            pattern: 'perms'
+            description: 'Show global perms settings.'
         },
     ]
 }

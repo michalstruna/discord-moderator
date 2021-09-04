@@ -1,11 +1,24 @@
 const Emoji = require('../../constants/Emoji')
+const { Flag } = require('../../constants/Pattern')
 const Pattern = require('../../constants/Pattern')
 const CommandService = require('../../service/CommandService')
 const MessageService = require('../../service/MessageService')
 const { InvalidInputError } = require('../../utils/Errors')
 
 const getHelp = async (commands, { server }) => {
-    return commands.map(command => `**${command.name}:** ${command.description} ${Emoji.SUCCESS}\n${command.actions.map(a => `> \`${server.prefix}${a.pattern}\` - ${a.description}`).join('\n')}`).join('\n\n')
+    return commands.map(command => `**${command.name}:** ${command.description} ${Emoji.SUCCESS}\n${command.actions.map(a => `> ${getActionPattern(server, command, a)} - ${a.description}`).join('\n')}`).join('\n\n')
+}
+
+const getActionPattern = (server, command, action) => {
+    let result = [server.prefix + command.name]
+
+    for (const arg of action.args || []) {
+        const tmp = `${arg.name}${arg.required ? '' : '?'}`
+        const isFlag = typeof arg.pattern === 'object' && arg.pattern instanceof Flag
+        result.push(isFlag ? `${tmp}` : `[${tmp}]`)
+    }
+
+    return `\`${result.join(' ')}\``
 }
 
 const getCommandHelp = async (command, { server }) => {
@@ -15,7 +28,7 @@ const getCommandHelp = async (command, { server }) => {
     result += `\n**Group:** Administration\n\n`
 
     for (const action of command.actions) {
-        result += `**${action.description.replace(/\.$/, '')}:** \`${server.prefix}${action.pattern}\`\n`
+        result += `**${action.description.replace(/\.$/, '')}:** ${getActionPattern(server, command, action)}\n`
 
         for (const arg of action.args || []) {
             if (!arg.description) {
@@ -26,7 +39,7 @@ const getCommandHelp = async (command, { server }) => {
         }
 
         if (action.examples?.length) {
-            result += `Examples: \`${action.examples.map(e => `${server.prefix}${e}`).join('`, `')}\`\n`
+            result += `Examples: \`${action.examples.map(e => `${server.prefix}${[command.name, ...e].join(' ')}`).join('`, `')}\`\n`
         }
 
         result += `Can use: <@&851746742742679604>, <@&852186757890048060>\n`
@@ -55,16 +68,14 @@ module.exports = {
                 MessageService.sendInfo(msg.channel, await getCommandHelp(command, meta), `Help • ${command.name}`)
             },
             description: 'Show command help.',
-            pattern: 'help [command]',
-            examples: ['help prefix']
+            examples: [['prefix']]
         },
         {
             execute: async (client, msg, args, meta) => {
                 const commands = await CommandService.getAll()
                 MessageService.sendInfo(msg.channel, await getHelp(commands, meta), `Help • Administration`)
             },
-            description: 'Show general help.',
-            pattern: 'help'
+            description: 'Show general help.'
         }
     ]
 }

@@ -33,6 +33,14 @@ class Validator extends Pattern {
 
 }
 
+class Flag extends Validator {
+
+    constructor(names) {
+        super(val => names.find(name => `-${val}` === name))
+    }
+    
+}
+
 class Mention extends Regex {
 
     constructor(prefix, name) {
@@ -68,7 +76,9 @@ module.exports = {
 
     VAL: value => new Validator(val => val === value),
 
-    FLAG: (...names) => new Validator(val => names.find(name => `-${val}`)),
+    FLAG: (...names) => new Flag(...names),
     ENUM: (...values) => new Validator(val => values.includes(val)),
-    VAL_OF_LENGTH: (max, min = 1) => new Validator(val => val.length >= min && val.length <= max && !/^-[a-z]+$/i.test(val))
+    VAL_OF_LENGTH: (max, min = 1) => new Validator(val => val.length >= min && val.length <= max && !/^-[a-z]+$/i.test(val)),
+
+    Flag
 }
