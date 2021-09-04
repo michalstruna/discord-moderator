@@ -22,7 +22,7 @@ module.exports = {
                 await ServerService.updateById(msg.guild.id, { roles: { [Role.ADMIN]: admin.id, [Role.MOD]: mod.id, [Role.MEMBER]: member.id } })
                 MessageService.sendSuccess(msg.channel, `Admin (${admin}), mod (${mod}) and member (${member}) roles were set.`)
             },
-            description: 'Set admin and mod role for command permissions.',
+            description: 'Set perm roles for commands.',
             pattern: 'perms [admin] [mod?] [member?]',
             examples: ['perms @Admin @Moderator @Member', 'perms @Admin']
         },
