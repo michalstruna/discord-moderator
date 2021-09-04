@@ -9,9 +9,10 @@ const getHelp = async (commands, { server }) => {
 }
 
 const getCommandHelp = async (command, { server }) => {
-    let result = `**Description:** ${command.description || ''} ${Emoji.SUCCESS}
-                  **Aliases:** \`${command.aliases.map(a => `${server.prefix}${a}`).join('`, `')}\`
-                  **Group:** Administration\n\n` // TODO: Group, Cooldown.
+    let result = `**Description:** ${command.description || ''} ${Emoji.SUCCESS}`
+
+    if (command.aliases) result += `\n**Aliases:** \`${command.aliases.map(a => `${server.prefix}${a}`).join('`, `')}\``
+    result += `\n**Group:** Administration\n\n`
 
     for (const action of command.actions) {
         result += `**${action.description.replace(/\.$/, '')}:** \`${server.prefix}${action.pattern}\`\n`

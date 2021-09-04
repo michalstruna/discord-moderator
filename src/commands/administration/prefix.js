@@ -24,7 +24,7 @@ module.exports = {
         },
         {
             args: [
-                { name: '-reset', pattern: Pattern.FLAG('-reset'), required: true }
+                { name: '-reset', pattern: Pattern.FLAG('reset'), required: true }
             ],
             allowRoles: [Role.ADMIN],
             execute: async (client, msg) => {

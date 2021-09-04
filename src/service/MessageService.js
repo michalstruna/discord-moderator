@@ -37,7 +37,7 @@ exports.parseCommand = (text, prefix) => {
     return [commandName, args]
 }
 
-exports.parseArgs = (args, rules = []) => {
+exports.parseArgs = async (args, rules = [], meta) => {
     const tmpArgs = [...args]
     const tmpRules = [...rules]
     const parsed = {}
@@ -68,7 +68,7 @@ exports.parseArgs = (args, rules = []) => {
         }
 
         if (tmpRules[0].pattern.test(tmpArgs[0])) { // Consume rule and argument.
-            parsed[tmpRules[0].name] = tmpRules[0].pattern.parse(tmpArgs[0])
+            parsed[tmpRules[0].name] = await tmpRules[0].pattern.parse(tmpArgs[0], meta)
             tmpArgs.shift()
             tmpRules.shift()
             continue

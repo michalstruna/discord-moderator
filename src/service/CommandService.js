@@ -35,12 +35,12 @@ exports.getAll = () => {
     return Array.from(commands.values())
 }
 
-const findAction = (actions, args) => {
+const findAction = async (actions, args, meta) => {
     const errors = []
 
     for (const action of actions) {
         try {
-            const parsedArgs = MessageService.parseArgs(args, action.args)
+            const parsedArgs = await MessageService.parseArgs(args, action.args, meta) // TODO: Separe find action (seq) and parse args (async)?
             return [action, parsedArgs]
         } catch (error) {
             errors.push(error)
@@ -53,7 +53,7 @@ const findAction = (actions, args) => {
 exports.execute = async (command, client, msg, args, meta) => {
     try {
         console.log(`command: ${msg.content}`, args)
-        const [action, parsedArgs] = findAction(command.actions, args)
+        const [action, parsedArgs] = await findAction(command.actions, args, meta)
         // TODO: Check perms
         await action.execute(client, msg, parsedArgs, meta)
 
