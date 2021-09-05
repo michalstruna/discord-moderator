@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const { MissingPermissionsError } = require('../utils/Errors')
+const { MissingPermissionsError, InvalidInputError } = require('../utils/Errors')
 
 const MessageService = require('./MessageService')
 const UserService = require('./UserService')
@@ -37,7 +37,12 @@ exports.exportAll = (roles, guild) => {
         const actions = {}
 
         command.actions.forEach(action => {
-            actions[action.name] = { roles: action.roles ? action.roles.map(r => roles[r]) : guild.roles.everyone.id }
+            actions[action.name] = {
+                perms: {
+                    allowRolesDefault: action.allowRoles ? action.allowRoles.map(r => roles[r]) : [guild.roles.everyone.id],
+                    forbidRolesDefault: action.forbidRoles ? action.forbidRoles.map(r => roles[r]) : []
+                }
+            }
         })
 
         result[command.name] = { actions }
@@ -62,6 +67,10 @@ const findAction = async (actions, args, meta) => {
             const parsedArgs = await MessageService.parseArgs(args, action.args, meta) // TODO: Separe find action (seq) and parse args (async)?
             return [action, parsedArgs]
         } catch (error) {
+            if (!(error instanceof InvalidInputError)) {
+                throw error
+            }
+
             errors.push(error)
         }
     }
@@ -73,9 +82,10 @@ exports.execute = async (command, client, msg, args, meta) => {
     try {
         console.log(`command: ${msg.content}`, args)
         const [action, parsedArgs] = await findAction(command.actions, args, meta)
-        const reqRoles = meta.server.commands.get(command.name).actions.get(action.name).roles
+        //const perms = meta.server.commands.get(command.name).actions.get(action.name).perms
+        const reqRoles = []
 
-        if (UserService.hasRole(msg.member, ...reqRoles)) {
+        if (true || UserService.hasRole(msg.member, ...reqRoles)) {
             await action.execute(client, msg, parsedArgs, meta)
         } else {
             throw new MissingPermissionsError(`${msg.member} needs to be ${list(reqRoles.map(role))}.`)

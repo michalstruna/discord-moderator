@@ -2,6 +2,7 @@ const Color = require('../constants/Color')
 const Emoji = require('../constants/Emoji')
 const Pattern = require('../constants/Pattern')
 const { InvalidInputError } = require('../utils/Errors')
+const { list } = require('../utils/Outputs')
 
 const Theme = exports.Theme = {
     SUCCESS: [Color.GREEN, Emoji.SUCCESS],
@@ -42,22 +43,22 @@ exports.parseArgs = async (args, rules = [], meta) => {
     const tmpRules = [...rules]
     const parsed = {}
 
-    while (true) {
-        if (tmpRules[0] && tmpRules[0].pattern === Pattern.REST) { // Rest of parameters.
-            if (tmpRules[0].required && tmpArgs.length === 0) throw new InvalidInputError(`You have to specify \`${tmpRules[0].name}\`.`)
-            parsed[tmpRules[0].name] = tmpArgs.join(' ')
-            break
-        }
+    const formatRules = rules => list(rules.map(rule => rule.pattern instanceof Pattern.Flag ? `\`-${rule.name}\`` : `\`${rule.name}\``), 'and')
 
+    while (true) {
         if (tmpArgs.length === 0 && tmpRules.length === 0) { // All rules and args were consumed.
             break
         }
 
         if (tmpArgs.length === 0 && tmpRules.length > 0) { // There are no args, but still some rules.
-            const reqRules = tmpRules.filter(r => r.required)
+            const reqRules = tmpRules.filter(r => {
+                if (!r.required) return false
+                if (r.pattern instanceof Pattern.Rest && parsed[r.name] && parsed[r.name].length > 0) return false
+                return true
+            })
 
             if (reqRules.length > 0) {
-                throw new InvalidInputError(`You have to specify \`${reqRules.map(r => r.name).join(', ')}\`.`)
+                throw new InvalidInputError(`You have to specify ${formatRules(reqRules)}.`)
             }
 
             break
@@ -65,6 +66,18 @@ exports.parseArgs = async (args, rules = [], meta) => {
 
         if (tmpArgs.length > 0 && tmpRules.length === 0) { // There are no rules, but still some args.
             throw new InvalidInputError(`Unknown arguments: \`${tmpArgs.join('`, `')}\``)
+        }
+
+        if (tmpRules[0].pattern instanceof Pattern.Rest) { // Consume argument without role.
+            if (tmpRules[0].pattern.test(tmpArgs[0])) {
+                if (!parsed[tmpRules[0].name]) parsed[tmpRules[0].name] = []
+                parsed[tmpRules[0].name].push(await tmpRules[0].pattern.parse(tmpArgs[0], meta))
+                tmpArgs.shift()
+            } else {
+                tmpRules.shift()
+            }
+
+            continue
         }
 
         if (tmpRules[0].pattern.test(tmpArgs[0])) { // Consume rule and argument.
@@ -77,7 +90,11 @@ exports.parseArgs = async (args, rules = [], meta) => {
         if (!tmpRules[0].required) { // For optional argument, it is possible consume only rule.
             tmpRules.shift()
         } else {
-            throw new InvalidInputError(`You have to specify \`${tmpRules[0].name}\`.`)
+            if (tmpRules[0].pattern instanceof Pattern.Rest && parsed[tmpRules[0].name] && parsed[tmpRules[0].name].length > 0) {
+                tmpRules.shift()
+            } else {
+                throw new InvalidInputError(`You have to specify ${formatRules([tmpRules[0]])}.`)
+            }
         }
     }
 

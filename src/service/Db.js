@@ -28,8 +28,15 @@ connect(process.env.DB_HOST, {
 
 const Id = String
 
+const Perms = new Schema({
+    allowRolesDefault: { type: [Id], required: true, default: [] },
+    forbidRolesDefault: { type: [Id], required: true, default: [] },
+    allowRoles: { type: [Id], required: true, default: [] },
+    forbidRoles: { type: [Id], required: true, default: [] }
+})
+
 const CommandAction = new Schema({
-    roles: { type: [Id], required: true, default: [] }
+    perms: { type: Perms, required: true }
 })
 
 const Command = new Schema({

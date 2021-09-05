@@ -14,7 +14,7 @@ module.exports = {
             args: [
                 { name: 'prefix', pattern: Pattern.VAL_OF_LENGTH(Config.MAX_PREFIX_LENGTH), required: true, description: 'New prefix (max. length 10).' }
             ],
-            roles: [Role.ADMIN],
+            allowRoles: [Role.ADMIN],
             execute: async (client, msg, { prefix }) => {
                 await ServerService.updateById(msg.guild.id, { prefix })
                 MessageService.sendSuccess(msg.channel, `Prefix for this server was set to \`${prefix}\``)
@@ -25,9 +25,9 @@ module.exports = {
         {
             name: 'reset',
             args: [
-                { name: '-reset', pattern: Pattern.FLAG('reset'), required: true }
+                { name: 'reset', pattern: Pattern.FLAG('reset'), required: true }
             ],
-            roles: [Role.ADMIN],
+            allowRoles: [Role.ADMIN],
             execute: async (client, msg) => {
                 await ServerService.updateById(msg.guild.id, { prefix: Config.DEFAULT_PREFIX })
                 MessageService.sendSuccess(msg.channel, `Prefix for this server was reset to \`${Config.DEFAULT_PREFIX}\``)
