@@ -1,5 +1,5 @@
 const CommandService = require('../service/CommandService')
-const { MentionNotFoundError } = require('../utils/Errors')
+const { MentionNotFoundError, NotFoundError } = require('../utils/Errors')
 
 class Pattern {
 
@@ -36,30 +36,50 @@ class Validator extends Pattern {
 
 class Flag extends Validator {
 
-    constructor(...names) {
+    constructor(name, value) {
+        const names = Array.isArray(name) ? name : [name]
         super(val => !!names.find(name => val === `-${name}`))
+        this.value = value
     }
     
 }
 
 class Mention extends Regex {
 
-    constructor(prefix, name) {
-        super(`(([0-9]+)|(<${prefix}[0-9]+>)|([^-].*))`)
+    constructor(prefix, name, fulltext = []) {
+        const ids = [`[0-9]{18}`, `<${prefix}[0-9]{18}>`]
+        if (fulltext.length > 0) ids.push(`[^-].*`)
+
+        super(`(${ids.map(id => `(${id})`).join('|')})`)
         this.prefix = prefix
         this.name = name
+        this.fulltext = fulltext
     }
 
     async parse(value, { msg }) {
-        const mentionRegex = new RegExp(`<${this.prefix}([0-9]+)>$`)
-        let id = mentionRegex.test(value) ? value.match(/[0-9]+/g)[0] : value
+        const mentionRegex = new RegExp(`<${this.prefix}([0-9]{18})>$`)
+        let id = mentionRegex.test(value) ? value.match(/[0-9]{18}/g)[0] : value
         const manager = msg.guild[`${this.name.toLowerCase()}s`]
-
+        if (manager.fetch) await manager.fetch()
         const nameRegex = new RegExp(value, 'i')
-        const item = manager.cache.find(v => v.id === id) || manager.cache.find(v => v.name.toLowerCase() === value.toLowerCase()) || manager.cache.find(v => v.name.toLowerCase().startsWith(value.toLowerCase())) || manager.cache.find(v => nameRegex.test(v.name)) // TODO: Display name? Tag? Username?
+
+        const item = manager.cache.find(v => v.id === id)
         if (item) return item
 
-        throw new MentionNotFoundError(`${this.name} with id/name \`${value}\` was not found.`)
+        if (this.fulltext.length > 0) {
+            const idsGetter = managerUnit => this.fulltext.map(getter => getter(managerUnit).toLowerCase())
+
+            for (const relation of [
+                managerUnit => idsGetter(managerUnit).includes(value.toLowerCase()),
+                managerUnit => !!idsGetter(managerUnit).find(v => v.startsWith(value.toLowerCase())),
+                managerUnit => !!idsGetter(managerUnit).find(v => nameRegex.test(v.name))
+            ]) {
+                const item = manager.cache.find(relation)
+                if (item) return item
+            }
+        }
+
+        throw new MentionNotFoundError(`${this.name} \`${value}\` was not found.`)
     }
 
 }
@@ -105,13 +125,13 @@ module.exports = {
         return command
     }),
 
-    MEMBER: new Mention('@!?', 'Member'),
-    ROLE: new Mention('@&', 'Role'),
+    MEMBER: new Mention('@!?', 'Member', [m => m.displayName, m => m.user.tag]),
+    ROLE: new Mention('@&', 'Role', [m => m.name]),
     CHANNEL: new Mention('#', 'Channel'),
 
     REST: (...args) => new Rest(...args),
     VAL: value => new Validator(val => val === value),
-    FLAG: (...names) => new Flag(...names),
+    FLAG: (name, value = null) => new Flag(name, value),
     ENUM: (...values) => new Validator(val => values.includes(val)),
     VAL_OF_LENGTH: (max, min = 1) => new Validator(val => val.length >= min && val.length <= max && !/^-[a-z]+$/i.test(val)),
 

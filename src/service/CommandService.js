@@ -81,6 +81,10 @@ const findAction = async (actions, args, meta) => {
 exports.execute = async (command, client, msg, args, meta) => {
     try {
         console.log(`command: ${msg.content}`, args)
+
+        const delAfter = args[0] === '-del'
+        if (delAfter) args.shift()
+
         const [action, parsedArgs] = await findAction(command.actions, args, meta)
         //const perms = meta.server.commands.get(command.name).actions.get(action.name).perms
         const reqRoles = []
@@ -91,7 +95,9 @@ exports.execute = async (command, client, msg, args, meta) => {
             throw new MissingPermissionsError(`${msg.member} needs to be ${list(reqRoles.map(role))}.`)
         }
 
-        if (action.react !== false) {
+        if (delAfter) {
+            msg.delete()
+        } else if (action.react !== false) {
             MessageService.reactSuccess(msg)
         }
     } catch (error) {

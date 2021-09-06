@@ -3,7 +3,6 @@ const { Flag, Rest } = require('../../constants/Pattern')
 const Pattern = require('../../constants/Pattern')
 const CommandService = require('../../service/CommandService')
 const MessageService = require('../../service/MessageService')
-const { InvalidInputError } = require('../../utils/Errors')
 const { actionPerms } = require('../../utils/Outputs')
 
 const getHelp = async (commands, { server }) => {
@@ -14,11 +13,17 @@ const getActionPattern = (server, command, action) => {
     let result = [server.prefix + command.name]
 
     for (const arg of action.args || []) {
-        let tmp = `${arg.name}${arg.required ? '' : '?'}`
+        const isFlagValue = arg.pattern instanceof Flag && arg.pattern.value
+        const name = isFlagValue ? `${arg.name} [${arg.name}])` : arg.name
+
+        let tmp = `${name}${arg.required ? '' : '?'}`
         if (arg.pattern.prefix) tmp = arg.pattern.prefix[0] + tmp
         if (arg.pattern instanceof Flag) tmp = `-${tmp}`
         if (arg.pattern instanceof Rest) tmp = `...${tmp}`
         if (!(arg.pattern instanceof Flag)) tmp = `[${tmp}]`
+
+        if (isFlagValue) tmp = `(${tmp}`
+
         result.push(tmp)
     }
 
@@ -43,8 +48,18 @@ const getCommandHelp = async (command, { server, msg }) => {
             result += `> \`${arg.name}\` - ${arg.description}\n`
         }
 
+        const renderExample = example => `${server.prefix}${[command.name, ...example].join(' ')}`
+
         if (action.examples?.length) {
-            result += `Examples: \`${action.examples.map(e => `${server.prefix}${[command.name, ...e].join(' ')}`).join('`, `')}\`\n`
+            if (action.examples.length === 1) {
+                result += `Example: \`${renderExample(action.examples[0])}\`\n`
+            } else {
+                result += `Examples:\n`
+
+                for (const example of action.examples) {
+                    result += `> \`${renderExample(example)}\`\n`
+                }
+            }
         }
 
         result += `Can use: ${actionPerms(serverCommand.actions.get(action.name), msg.guild.roles.everyone.id)}\n`
