@@ -1,7 +1,7 @@
-const Pattern = require('../../constants/Pattern')
-const Role = require('../../constants/Role')
+const RoleType = require('../../constants/RoleType')
 const MessageService = require('../../service/MessageService')
 const ServerService = require('../../service/ServerService')
+const { Command, Text, List, Role, Bool } = require('../../utils/Args')
 const { role, keyValueList, actionPerms, everyone } = require('../../utils/Outputs')
 
 module.exports = {
@@ -11,14 +11,13 @@ module.exports = {
         {
             name: 'set',
             args: [
-                { name: 'command', pattern: Pattern.COMMAND, required: true },
-                { name: 'action', pattern: Pattern.NAME, required: false },
-                { name: 'roles', pattern: Pattern.REST(Pattern.ROLE), required: true },
-                { name: 'except', pattern: Pattern.FLAG('except'), required: false },
-                { name: 'exceptRoles', pattern: Pattern.REST(Pattern.ROLE), required: false },
+                Command('command').req(),
+                Text('action'),
+                List('roles').of(Role()).req(),
+                List('except').of(Role()).explicit()
             ],
-            allowRoles: [Role.ADMIN],
-            execute: async (client, msg, { command, action, roles, except, exceptRoles }, meta) => {
+            allowRoles: [RoleType.ADMIN],
+            execute: async ({ command, action, roles, except }, {  }) => {
 
             },
             description: 'Set perms for command/action.',
@@ -27,17 +26,14 @@ module.exports = {
         {
             name: 'default',
             args: [
-                { name: 'default', pattern: Pattern.FLAG('default'), required: true },
-                { name: 'admin', pattern: Pattern.ROLE, required: true, description: 'Admin role.' },
-                { name: 'mod', pattern: Pattern.ROLE, required: false, description: 'Mod role.' },
-                { name: 'member', pattern: Pattern.ROLE, required: false, description: 'Member role.' }
+                Bool('default').req(),
+                Role('admin', 'Admin role.').elseEveryone(),
+                Role('mod', 'Mod role.').elseEveryone(),
+                Role('member', 'Member role').elseEveryone()
             ],
-            allowRoles: [Role.ADMIN],
-            execute: async (client, msg, { admin, mod, member }) => {
-                mod = mod || msg.guild.roles.everyone
-                member = member || msg.guild.roles.everyone
-
-                await ServerService.setPerms(msg.guild, { [Role.ADMIN]: admin.id, [Role.MOD]: mod.id, [Role.MEMBER]: member.id })
+            allowRoles: [RoleType.ADMIN],
+            execute: async ({ admin, mod, member }, { msg }) => {
+                await ServerService.setPerms(msg.guild, { [RoleType.ADMIN]: admin.id, [RoleType.MOD]: mod.id, [RoleType.MEMBER]: member.id })
                 MessageService.sendSuccess(msg.channel, `Admin (${admin}), mod (${mod}) and member (${member}) roles were set.`)
             },
             description: 'Set default perm roles.',
@@ -46,11 +42,11 @@ module.exports = {
         {
             name: 'reset',
             args: [
-                { name: 'reset', pattern: Pattern.FLAG('reset'), required: true },
-                { name: 'command', pattern: Pattern.COMMAND, required: false }
+                Bool('reset').req(),
+                Command('command')
             ],
-            allowRoles: [Role.ADMIN],
-            execute: async (client, msg, args, meta) => {
+            allowRoles: [RoleType.ADMIN],
+            execute: async (args, meta) => {
 
             },
             description: 'Reset all perms or perms of command.',
@@ -59,9 +55,9 @@ module.exports = {
         {
             name: 'get',
             args: [
-                { name: 'command', pattern: Pattern.COMMAND, required: false }
+                Command('command')
             ],
-            execute: async (client, msg, { command }, { server }) => {
+            execute: async ({ command }, { msg, server }) => {
                 if (command) {
                     const serverCommand = server.commands.get(command.name)
                     MessageService.sendInfo(msg.channel, keyValueList(command.actions.map(a => (
@@ -69,7 +65,7 @@ module.exports = {
                     )), true), `Perms • ${command.name}`)
                 } else {
                     const roles = keyValueList([
-                        ['Admin', Role.ADMIN], ['Mod', Role.MOD],['Member', Role.MEMBER]
+                        ['Admin', RoleType.ADMIN], ['Mod', RoleType.MOD],['Member', RoleType.MEMBER]
                     ].map(([name, value]) => {
                         const r = server.roles.get(value)
                         return ([name, r === msg.guild.roles.everyone.id ? everyone() : role(r)])

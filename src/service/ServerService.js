@@ -1,5 +1,5 @@
 const Db = require('./Db')
-const Role = require('../constants/Role')
+const RoleType = require('../constants/RoleType')
 const CommandService = require('./CommandService')
 
 exports.getById = async (id, guild = null) => {
@@ -16,7 +16,7 @@ exports.getById = async (id, guild = null) => {
 exports.setPerms = async (guild, roles = null) => {
     const id = guild.id
     const everyoneId = guild.roles.everyone.id
-    roles = roles || { [Role.ADMIN]: everyoneId, [Role.MOD]: everyoneId, [Role.MEMBER]: everyoneId }
+    roles = roles || { [RoleType.ADMIN]: everyoneId, [RoleType.MOD]: everyoneId, [RoleType.MEMBER]: everyoneId }
     return await Db.update(Db.Server, { id }, { roles, commands: CommandService.exportAll(roles, guild) })
 }
 

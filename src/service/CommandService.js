@@ -1,10 +1,8 @@
 const fs = require('fs')
 const path = require('path')
-const { MissingPermissionsError, InvalidInputError } = require('../utils/Errors')
+const { InvalidInputError } = require('../utils/Errors')
 
 const MessageService = require('./MessageService')
-const UserService = require('./UserService')
-const { role, list } = require('../utils/Outputs')
 
 const commands = new Map()
 const aliases = new Map()
@@ -59,51 +57,34 @@ exports.getAll = () => {
     return Array.from(commands.values())
 }
 
-const findAction = async (actions, args, meta) => {
+const findAction = (actions, argsSet) => {
     const errors = []
 
     for (const action of actions) {
         try {
-            const parsedArgs = await MessageService.parseArgs(args, action.args, meta) // TODO: Separe find action (seq) and parse args (async)?
-            return [action, parsedArgs]
+            return [action, argsSet.test(action.args)]
         } catch (error) {
-            if (!(error instanceof InvalidInputError)) {
-                throw error
-            }
-
             errors.push(error)
         }
     }
-    
+
     throw errors[0]
 }
 
-exports.execute = async (command, client, msg, args, meta) => {
+exports.execute = async (command, argsSet, meta) => {
     try {
-        console.log(`command: ${msg.content}`, args)
+        console.log(`command: ${meta.msg.content}`, argsSet)
+        const [action, testedArgsSet] = findAction(command.actions, argsSet)
+        const parsedArgs = await testedArgsSet.parse(meta)
+        await action.execute(parsedArgs, meta) // TODO: Check perms.
 
-        const delAfter = args[0] === '-del'
-        if (delAfter) args.shift()
-
-        const [action, parsedArgs] = await findAction(command.actions, args, meta)
-        //const perms = meta.server.commands.get(command.name).actions.get(action.name).perms
-        const reqRoles = []
-
-        if (true || UserService.hasRole(msg.member, ...reqRoles)) {
-            await action.execute(client, msg, parsedArgs, meta)
-        } else {
-            throw new MissingPermissionsError(`${msg.member} needs to be ${list(reqRoles.map(role))}.`)
-        }
-
-        if (delAfter) {
-            msg.delete()
-        } else if (action.react !== false) {
-            MessageService.reactSuccess(msg)
+        if (action.react !== false) { // TODO: If --delete arg, delete message.
+            MessageService.reactSuccess(meta.msg)
         }
     } catch (error) {
         console.error(error)
-        MessageService.reactFail(msg)
+        MessageService.reactFail(meta.msg)
         const errTitle = error.title === undefined ? 'Something bad happened' : error.title
-        MessageService.sendFail(msg.channel, error.message, errTitle, error.color)
+        MessageService.sendFail(meta.msg.channel, error.message, errTitle, error.color)
     }
 }

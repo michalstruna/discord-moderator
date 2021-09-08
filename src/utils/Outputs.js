@@ -6,6 +6,7 @@ const channel = exports.channel = id => `<#${id}>`
 const everyone = exports.everyone = () => '@everyone'
 
 const list = exports.list = (values, lastSeparator = 'or') => [...new Set(values)].join(', ').replace(/, ([^,]*)$/, ` ${lastSeparator} $1`)
+const codeList = exports.codeList = (values, lastSeparator = 'or') => list(values.map(val => `\`${val}\``), lastSeparator)
 
 const keyValueList = exports.keyValueList = (pairs, bold = false) => pairs.map(([key, value]) => {
     const edge = bold ? '**' : ''

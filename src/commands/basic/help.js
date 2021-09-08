@@ -1,8 +1,7 @@
 const Emoji = require('../../constants/Emoji')
-const { Flag, Rest } = require('../../constants/Pattern')
-const Pattern = require('../../constants/Pattern')
 const CommandService = require('../../service/CommandService')
 const MessageService = require('../../service/MessageService')
+const { Command } = require('../../utils/Args')
 const { actionPerms } = require('../../utils/Outputs')
 
 const getHelp = async (commands, { server }) => {
@@ -10,24 +9,7 @@ const getHelp = async (commands, { server }) => {
 }
 
 const getActionPattern = (server, command, action) => {
-    let result = [server.prefix + command.name]
-
-    for (const arg of action.args || []) {
-        const isFlagValue = arg.pattern instanceof Flag && arg.pattern.value
-        const name = isFlagValue ? `${arg.name} [${arg.name}])` : arg.name
-
-        let tmp = `${name}${arg.required ? '' : '?'}`
-        if (arg.pattern.prefix) tmp = arg.pattern.prefix[0] + tmp
-        if (arg.pattern instanceof Flag) tmp = `-${tmp}`
-        if (arg.pattern instanceof Rest) tmp = `...${tmp}`
-        if (!(arg.pattern instanceof Flag)) tmp = `[${tmp}]`
-
-        if (isFlagValue) tmp = `(${tmp}`
-
-        result.push(tmp)
-    }
-
-    return `\`${result.join(' ')}\``
+    return `\`${[server.prefix + command.name, ...(action.args || []).map(arg => arg.toString())].join(' ')}\``
 }
 
 const getCommandHelp = async (command, { server, msg }) => {
@@ -77,14 +59,14 @@ module.exports = {
         {
             name: 'get',
             args: [
-                { name: 'command', pattern: Pattern.COMMAND, required: false, description: 'Name of command.' }
+                Command('command', 'Name of command.')
             ],
-            execute: async (client, msg, { command }, meta) => {
+            execute: async ({ command }, meta) => {
                 if (command) {    
-                    MessageService.sendInfo(msg.channel, await getCommandHelp(command, meta), `Help • ${command.name}`)
+                    MessageService.sendInfo(meta.msg.channel, await getCommandHelp(command, meta), `Help • ${command.name}`)
                 } else {
-                    const commands = await CommandService.getAll()
-                    MessageService.sendInfo(msg.channel, await getHelp(commands, meta), `Help • Administration`)
+                    const commands = CommandService.getAll()
+                    MessageService.sendInfo(meta.msg.channel, await getHelp(commands, meta), `Help • Administration`)
                 }
             },
             description: 'Show general help or command help.',

@@ -1,6 +1,6 @@
-const Pattern = require('../../constants/Pattern')
-const Role = require('../../constants/Role')
+const RoleType = require('../../constants/RoleType')
 const MessageService = require('../../service/MessageService')
+const { Member, Channel, List, Bool } = require('../../utils/Args')
 
 module.exports = {
     name: 'echo',
@@ -9,19 +9,19 @@ module.exports = {
         {
             name: 'send',
             args: [
-                { name: 'as', pattern: Pattern.FLAG('as', Pattern.MEMBER), required: false, description: 'Send message as webhook with identity of specified user.' },
-                //{ name: 'title', pattern: Pattern.FLAG('title', Pattern.REST(Pattern.ANY)), required: false, description: 'Send message as webhook with identity of specified user.' },
-                //{ name: 'color', pattern: Pattern.FLAG('title', Pattern.REST(Pattern.ANY)), required: false, description: 'Send message as webhook with identity of specified user.' },
-                //{ name: 'footer', pattern: Pattern.FLAG('title', Pattern.REST(Pattern.ANY)), required: false, description: 'Send message as webhook with identity of specified user.' },
-                { name: 'channel', pattern: Pattern.CHANNEL, required: false, description: 'If not provided, send to current channel.' },
-                { name: 'message', pattern: Pattern.REST(Pattern.ANY), required: true, description: 'Text you want to send.' }
+                Channel('channel', 'If not provided, send to current channel.' ).elseCurrent(),
+                Member('as', 'Send message as webhook with identity of specified user.').explicit(),
+                Bool('server', 'Send message as webhook with identity of server.'),
+                List('message', 'Text you want to send.').req().join()
             ],
-            allowRoles: [Role.ADMIN, Role.MOD],
-            execute: async (client, msg, { as, channel, message }) => {
-                if (as) {
-                    MessageService.sendMemberWebhook(channel || msg.channel, as, message.join(' '))
+            allowRoles: [RoleType.ADMIN, RoleType.MOD],
+            execute: async ({ as, server, channel, message }) => {
+                if (server) {
+
+                } else if (as) {
+                    MessageService.sendMemberWebhook(channel, as, message)
                 } else {
-                    (channel || msg.channel).send(message.join(' '))
+                    channel.send(message)
                 }
             },
             description: 'Send text to specified channel.',

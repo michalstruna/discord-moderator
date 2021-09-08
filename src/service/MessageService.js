@@ -3,6 +3,7 @@ const Discord = require('discord.js')
 const Color = require('../constants/Color')
 const Emoji = require('../constants/Emoji')
 const Pattern = require('../constants/Pattern')
+const { ArgsSet } = require('../utils/Args')
 const { InvalidInputError } = require('../utils/Errors')
 const { list } = require('../utils/Outputs')
 
@@ -61,17 +62,17 @@ exports.sendFail = (channel, description, title, color) => send(channel, { descr
 exports.sendInfo = (channel, description, title, color) => send(channel, { description, title, color })
 
 exports.parseCommand = (text, prefix) => {
-    const prefixRegex = new RegExp(`^${prefix} *`)
-    const args = text.trim().replace(prefixRegex, '').split(/ +/)
-    const commandName = prefixRegex.test(text) ? args.shift().toLowerCase() : null
-
-    return [commandName, args]
+    const prefixRegex = new RegExp(`^${'\\' + prefix} *`)
+    const argsSet = new ArgsSet(text.trim().replace(prefixRegex, ''))
+    const commandName = prefixRegex.test(text) ? argsSet.shift() : null
+    return [commandName, argsSet]
 }
 
-exports.parseArgs = async (args, rules = [], meta) => {
-    const tmpArgs = [...args]
-    const tmpRules = [...rules]
+exports.parseArgs = async (argsSet, rules = [], meta) => { // TODO: Delete.
     const parsed = {}
+
+    const tmpArgs = argsSet.copy()
+    const tmpRules = [...rules]
 
     const formatRules = rules => list(rules.map(rule => rule.pattern instanceof Pattern.Flag ? `\`-${rule.name}\`` : `\`${rule.name}\``), 'and')
 

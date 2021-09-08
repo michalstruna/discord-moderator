@@ -1,8 +1,8 @@
 const Config = require('../../constants/Config')
-const Pattern = require('../../constants/Pattern')
-const Role = require('../../constants/Role')
+const RoleType = require('../../constants/RoleType')
 const MessageService = require('../../service/MessageService')
 const ServerService = require('../../service/ServerService')
+const { Text, Bool } = require('../../utils/Args')
 
 module.exports = {
     name: 'prefix',
@@ -12,10 +12,10 @@ module.exports = {
         {
             name: 'set',
             args: [
-                { name: 'prefix', pattern: Pattern.VAL_OF_LENGTH(Config.MAX_PREFIX_LENGTH), required: true, description: 'New prefix (max. length 10).' }
+                Text('prefix', `New prefix (max. length ${Config.MAX_PREFIX_LENGTH}).`).max(Config.MAX_PREFIX_LENGTH).req()
             ],
-            allowRoles: [Role.ADMIN],
-            execute: async (client, msg, { prefix }) => {
+            allowRoles: [RoleType.ADMIN],
+            execute: async ({ prefix }, { msg }) => {
                 await ServerService.updateById(msg.guild.id, { prefix })
                 MessageService.sendSuccess(msg.channel, `Prefix for this server was set to \`${prefix}\``)
             },
@@ -25,10 +25,10 @@ module.exports = {
         {
             name: 'reset',
             args: [
-                { name: 'reset', pattern: Pattern.FLAG('reset'), required: true }
+                Bool('reset').req()
             ],
-            allowRoles: [Role.ADMIN],
-            execute: async (client, msg) => {
+            allowRoles: [RoleType.ADMIN],
+            execute: async (args, { msg }) => {
                 await ServerService.updateById(msg.guild.id, { prefix: Config.DEFAULT_PREFIX })
                 MessageService.sendSuccess(msg.channel, `Prefix for this server was reset to \`${Config.DEFAULT_PREFIX}\``)
             },
@@ -36,7 +36,7 @@ module.exports = {
         },
         {
             name: 'get',
-            execute: async (client, msg, args, { server }) => {
+            execute: async (args, { msg, server }) => {
                 MessageService.sendInfo(msg.channel, `Current prefix: \`${server.prefix}\``)
             },
             description: 'Show current prefix.',
