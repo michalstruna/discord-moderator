@@ -216,7 +216,7 @@ class List extends Arg {
 
     constructor(...args) {
         super(...args)
-        this.arg = new Text()
+        this.type = new Text()
     }
 
     toString() {
@@ -224,11 +224,11 @@ class List extends Arg {
     }
 
     test(value) {
-        return this.of.test(value)
+        return this.type.test(value)
     }
 
     async parse(values) {
-        const parsed = await Promise.all(values.map(this.of.parse))
+        const parsed = await Promise.all(values.map(this.type.parse))
         return this.withJoin ? parsed.join(' ') : parsed
     }
 
