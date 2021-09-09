@@ -1,7 +1,7 @@
 const RoleType = require('../../constants/RoleType')
 const MessageService = require('../../service/MessageService')
 const ServerService = require('../../service/ServerService')
-const { Command, Text, List, Role, Bool } = require('../../utils/Args')
+const { Command, Text, List, Role, Bool, RoleClass } = require('../../utils/Args')
 const { role, keyValueList, actionPerms, everyone } = require('../../utils/Outputs')
 
 module.exports = {
@@ -11,10 +11,10 @@ module.exports = {
         {
             name: 'set',
             args: [
-                Command('command').req(),
-                Text('action'),
-                List('roles').of(Role()).req(),
-                List('except').of(Role()).explicit()
+                Command('command', 'Name of command.').req(),
+                Text('action', 'Command action.'),
+                List('roles', 'List of allowed roles.').of(Role()).req(),
+                List('except', 'List of forbidden roles.').of(Role()).explicit()
             ],
             allowRoles: [RoleType.ADMIN],
             execute: async ({ command, action, roles, except }, {  }) => {
@@ -27,9 +27,9 @@ module.exports = {
             name: 'default',
             args: [
                 Bool('default').req(),
-                Role('admin', 'Admin role.').elseEveryone(),
-                Role('mod', 'Mod role.').elseEveryone(),
-                Role('member', 'Member role').elseEveryone()
+                Role('admin', 'Admin role.').default(RoleClass.EVERYONE),
+                Role('mod', 'Mod role.').default(RoleClass.EVERYONE),
+                Role('member', 'Member role.').default(RoleClass.EVERYONE)
             ],
             allowRoles: [RoleType.ADMIN],
             execute: async ({ admin, mod, member }, { msg }) => {

@@ -110,8 +110,9 @@ class ArgsSet {
 
 class Arg {
 
-    constructor(name) {
+    constructor(name, description) {
         this.name = name
+        this.description = description
     }
 
     test(value) {
@@ -133,6 +134,10 @@ class Arg {
     set(name, value) {
         this[name] = value
         return this
+    }
+
+    default(value) {
+        return this.set('defaultValue', value)
     }
 
     req(required = true) {
@@ -173,25 +178,23 @@ class Command extends Text {
 
 class Mention extends Text {
 
-    elseCurrent(elseCurrent = true) {
-        return this.set('elseCurrent', elseCurrent)
-    }
-
 }
 
 class Member extends Mention {
+
+    static CURRENT = { description: 'yourself' }
 
 }
 
 class Role extends Mention {
 
-    elseEveryone() {
-        return this.set('everyone', true)
-    }
+    static EVERYONE = { description: 'everyone' }
 
 }
 
 class Channel extends Mention {
+
+    static CURRENT = { description: 'current channel' }
 
 }
 
@@ -208,6 +211,10 @@ class Bool extends Arg {
     constructor(...args) {
         super(...args)
         this.explicit = true
+    }
+
+    toString() {
+        return super.toString().replace('[', '[-')
     }
 
 }
@@ -255,5 +262,16 @@ module.exports = {
     Real: factory(Real),
     Int: factory(Int),
     Bool: factory(Bool),
-    List: factory(List)
+    List: factory(List),
+
+    TextClass: Text,
+    CommandClass: Command,
+    MentionClass: Mention,
+    MemberClass: Member,
+    RoleClass: Role,
+    ChannelClass: Channel,
+    RealClass: Real,
+    IntClass: Int,
+    BoolClass: Bool,
+    ListClass: List
 }

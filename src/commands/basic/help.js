@@ -27,7 +27,7 @@ const getCommandHelp = async (command, { server, msg }) => {
                 continue
             }
 
-            result += `> \`${arg.name}\` - ${arg.description}\n`
+            result += `> \`${arg.name}\` - ${arg.description}${arg.defaultValue ? ` *(default \`${arg.defaultValue.description || args.defaultValue}\`)*` : ''}\n`
         }
 
         const renderExample = example => `${server.prefix}${[command.name, ...example].join(' ')}`
