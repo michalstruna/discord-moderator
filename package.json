@@ -11,8 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "discord-buttons": "^3.2.1",
-    "discord.js": "^12.5.3",
+    "discord.js": "^13.1.0",
     "dotenv": "^9.0.2",
     "mongoose": "^5.12.14",
     "yargs-parser": "^20.2.9"

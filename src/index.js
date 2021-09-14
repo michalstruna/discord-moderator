@@ -2,10 +2,10 @@ require('dotenv').config()
 require('./service/Db')
 
 const Discord = require('discord.js')
-const Buttons = require('discord-buttons')
 
-const client = new Discord.Client()
-Buttons(client)
+const client = new Discord.Client({
+    intents: []
+})
 
 for (const handler of ['command', 'event']) {
     require(`./handlers/${handler}`)(client)

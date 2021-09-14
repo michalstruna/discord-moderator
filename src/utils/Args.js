@@ -178,6 +178,10 @@ class Command extends Text {
 
 class Mention extends Text {
 
+    elseCurrent() {
+        
+    }
+
 }
 
 class Member extends Mention {
