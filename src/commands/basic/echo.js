@@ -1,6 +1,6 @@
 const RoleType = require('../../constants/RoleType')
 const MessageService = require('../../service/MessageService')
-const { Member, Channel, List, Bool } = require('../../utils/Args')
+const { Member, Channel, List, Bool, Command } = require('../../utils/Args')
 
 module.exports = {
     name: 'echo',

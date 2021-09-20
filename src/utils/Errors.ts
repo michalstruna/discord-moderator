@@ -1,11 +1,22 @@
-const Color = require('../constants/Color')
+import Color from '../constants/Color'
 
-const factory = (color, defaultTitle) => class extends Error {
+const factory = (color: Color, defaultTitle: string | null) => class extends Error {
 
-    constructor(message, title = defaultTitle) {
+    private _title: string | null
+    private _color: Color
+
+    constructor(message: string, title: string | null = defaultTitle) {
         super(message)
-        this.title = title
-        this.color = color
+        this._title = title
+        this._color = color
+    }
+
+    public get title() {
+        return this._title
+    }
+
+    public get color() {
+        return this._color
     }
 
 }

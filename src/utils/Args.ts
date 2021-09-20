@@ -1,12 +1,12 @@
-const argv = require('yargs-parser')
+import argv, { Arguments } from 'yargs-parser'
 
 const { InvalidInputError, NotFoundError } = require('./Errors')
 const { codeList } = require('./Outputs')
 const CommandService = require('../service/CommandService')
 
-const formatList = (vals, getter = x => x) => codeList(vals.map(getter), 'and')
+const formatList = (vals: string[], getter = (x: string) => x) => codeList(vals.map(getter), 'and')
 
-class TestedArgsSet {
+export class TestedArgsSet {
 
     constructor(args, rules) {
         this.args = args
@@ -29,27 +29,28 @@ class TestedArgsSet {
 
 }
 
-class ArgsSet {
+export class ArgsSet {
 
-    constructor(input) {
-        this.input = input
+    private args: Arguments
+
+    constructor(input: string) {
         this.args = argv(input)
     }
 
-    shift() {
+    public shift() {
         return this.args._.shift()
     }
 
     /** Test if args set can accept all rules. */
-    test(rules) {
+    public test(rules: Arg[]) {
         const tested = {}
         let tmpRules = [...rules]
-        let reqRules = [...rules.filter(r => r.required)]
+        let reqRules = [...rules.filter(r => r.isRequired())]
         let tmpArgs = [...this.args._]
 
         for (const key in this.args) {
             if (key === '_') continue
-            const rule = tmpRules.find(r => r.name === key)
+            const rule = tmpRules.find(r => r.getName() === key)
             const isList = rule instanceof List
             if (!rule) throw new InvalidInputError(`Unexpected argument \`${key}\`.`)
             if (!rule.test(this.args[key])) throw InvalidInputError(`Invalid argument \`${key}\`.`)
@@ -106,24 +107,39 @@ class ArgsSet {
 
 }
 
+export abstract class Arg {
 
+    protected name: string
+    protected description?: string
+    
+    protected needName?: boolean
+    protected required?: boolean
+    protected defaultValue?: any
+    protected maximum?: number
+    protected minimum?: number
 
-class Arg {
-
-    constructor(name, description) {
+    constructor(name: string, description?: string) {
         this.name = name
         this.description = description
     }
 
-    test(value) {
+    public getName() {
+        return this.name
+    }
+
+    public isRequired() {
+        return this.required
+    }
+
+    public isExplicit() {
+        return this.needName
+    }
+
+    public test(value: string) {
         return true
     }
 
-    async parse(input) {
-        return input
-    }
-
-    toString() {
+    public toString() {
         let result = this.name
         if (this.needName) result = `-${this.name} ${this.name}`
         if (!this.required) result += '?'
@@ -131,40 +147,44 @@ class Arg {
         return result
     }
 
-    set(name, value) {
-        this[name] = value
+    public default(value: any) {
+        this.defaultValue = value
         return this
     }
 
-    default(value) {
-        return this.set('defaultValue', value)
+    public req(required: boolean = true) {
+        this.required = required
+        return this
     }
 
-    req(required = true) {
-        return this.set('required', required)
+    public max(max: number) {
+        this.maximum = max
+        return this
     }
 
-    max(max) {
-        return this.set('maximum', max)
+    public min(min: number) {
+        this.minimum = min
+        return this
     }
 
-    min(min) {
-        return this.set('minimum', min)
-    }
-
-    explicit(needName = true) {
-        return this.set('needName', needName)
+    public explicit(needName: boolean = true) {
+        this.needName = needName
+        return this
     }
 
 }
 
-class Text extends Arg {
+export class Text extends Arg {
+
+    public async parse(input: string) {
+        return input
+    }
 
 }
 
-class Command extends Text {
+export class Command extends Text {
 
-    async parse(value) {
+    async parse(value: string) {
         const command = await CommandService.getByName(value)
 
         if (!command) {
@@ -176,106 +196,93 @@ class Command extends Text {
 
 }
 
-class Mention extends Text {
+export class Mention extends Text {
 
-    elseCurrent() {
+    public elseCurrent() {
         
     }
 
 }
 
-class Member extends Mention {
+export class Member extends Mention {
 
-    static CURRENT = { description: 'yourself' }
-
-}
-
-class Role extends Mention {
-
-    static EVERYONE = { description: 'everyone' }
+    public static CURRENT = { description: 'yourself' }
 
 }
 
-class Channel extends Mention {
+export class Role extends Mention {
 
-    static CURRENT = { description: 'current channel' }
-
-}
-
-class Real extends Arg {
+    public static EVERYONE = { description: 'everyone' }
 
 }
 
-class Int extends Real {
+export class Channel extends Mention {
+
+    public static CURRENT = { description: 'current channel' }
 
 }
 
-class Bool extends Arg {
+export class Real extends Arg {
 
-    constructor(...args) {
-        super(...args)
-        this.explicit = true
+}
+
+export class Int extends Real {
+
+}
+
+export class Bool extends Arg {
+
+    constructor(name: string, description?: string) {
+        super(name, description)
+        this.explicit()
     }
 
-    toString() {
+    public toString() {
         return super.toString().replace('[', '[-')
     }
 
 }
 
-class List extends Arg {
+export class Switch extends Bool {
 
-    constructor(...args) {
-        super(...args)
-        this.type = new Text()
-    }
-
-    toString() {
-        return super.toString().replace(']', '...]')
-    }
-
-    test(value) {
-        return this.type.test(value)
-    }
-
-    async parse(values) {
-        const parsed = await Promise.all(values.map(this.type.parse))
-        return this.withJoin ? parsed.join(' ') : parsed
-    }
-
-    of(arg) {
-        return this.set('arg', arg)
-    }
-
-    join(join = true) {
-        return this.set('withJoin', join)
+    constructor(name: string, description?: string) {
+        super(name, description)
+        this.req()
     }
 
 }
 
-const factory = type => (...args) => new type(...args)
+export class List extends Arg {
 
-module.exports = {
-    ArgsSet,
-    Text: factory(Text),
-    Command: factory(Command),
-    Mention: factory(Mention),
-    Member: factory(Member),
-    Role: factory(Role),
-    Channel: factory(Channel),
-    Real: factory(Real),
-    Int: factory(Int),
-    Bool: factory(Bool),
-    List: factory(List),
+    protected type: Text
+    protected withJoin?: boolean
 
-    TextClass: Text,
-    CommandClass: Command,
-    MentionClass: Mention,
-    MemberClass: Member,
-    RoleClass: Role,
-    ChannelClass: Channel,
-    RealClass: Real,
-    IntClass: Int,
-    BoolClass: Bool,
-    ListClass: List
+    constructor(name: string, description?: string) {
+        super(name, description)
+        this.type = new Text(name, description)
+    }
+
+    public toString() {
+        return super.toString().replace(']', '...]')
+    }
+
+    public test(value: string) {
+        return this.type.test(value)
+    }
+
+    public async parse(values: string[]) {
+        const parsed = await Promise.all(values.map(this.type.parse))
+        return this.withJoin ? parsed.join(' ') : parsed
+    }
+
+    public of(type: Text) {
+        this.type = type
+        return this
+    }
+
+    public join(withJoin: boolean = true) {
+        this.withJoin = withJoin
+        return this
+    }
+
 }
