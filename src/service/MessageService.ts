@@ -15,8 +15,8 @@ module MessageService {
     }
 
     export const react = (msg: Message, emoji: string) => msg.react(emoji)
-    export const reactSuccess = (msg: Message) => exports.react(msg, Emoji.SUCCESS)
-    export const reactFail = (msg: Message) => exports.react(msg, Emoji.FAIL)
+    export const reactSuccess = (msg: Message) => react(msg, Emoji.SUCCESS)
+    export const reactFail = (msg: Message) => react(msg, Emoji.FAIL)
 
     export const send = (channel: TextBasedChannels, data: MessageEmbedOptions = {}, [color, emoji]: Theme = Theme.INFO) => {
         const embed = { ...data, color: data.color || color }

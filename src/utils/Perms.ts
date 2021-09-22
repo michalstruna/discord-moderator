@@ -1,6 +1,6 @@
-import { Action, ServerAction } from '../model/types'
+import { ServerAction } from '../model/types'
 
-exports.getActionPerms = (action: ServerAction) => {
+export const getActionPerms = (action: ServerAction) => {
     const permit = action.auth?.permit
     const deny = action.auth?.deny
 
