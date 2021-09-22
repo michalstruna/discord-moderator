@@ -135,6 +135,14 @@ export abstract class Arg {
         return this.name
     }
 
+    public getDescription() {
+        return this.description
+    }
+
+    public getDefault() {
+        return this.defaultValue
+    }
+
     public isRequired() {
         return this.required
     }
@@ -186,7 +194,7 @@ export class Text extends Arg {
 
 }
 
-export class Command extends Text {
+export class Cmd extends Text {
 
     async parse(value: string) {
         const command = await CommandService.getByName(value)
@@ -203,7 +211,8 @@ export class Command extends Text {
 export class Mention extends Text {
 
     public elseCurrent() {
-        
+        // TODO
+        return this
     }
 
 }

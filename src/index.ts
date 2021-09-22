@@ -9,7 +9,7 @@ const client = new Client({
 })
 
 for (const handler of ['command', 'event']) {
-    import(`./handlers/${handler}`).then(handler => handler(client))
+    require(`./handlers/${handler}`).default.run(client)
 }
 
 client.login(process.env.TOKEN).then(async () => {

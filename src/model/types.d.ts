@@ -1,4 +1,4 @@
-import { Client, Guild, GuildMember, Message, TextChannel } from 'discord.js'
+import { Client, Guild, GuildMember, Message, TextBasedChannel, TextChannel } from 'discord.js'
 
 import RoleType from '../constants/RoleType'
 import { Arg } from '../utils/Args'
@@ -37,11 +37,8 @@ export type ServerData = {
 
 export type ActionMeta = {
     msg: Message
-    guild: Guild
     client: Client
     server: ServerData
-    channel: TextChannel
-    author: GuildMember
 }
 
 export type Action = {
@@ -59,4 +56,8 @@ export type CommandOptions = {
     aliases?: string[]
     description?: string
     actions: Action[]
+}
+
+export type Part<T> = {
+    [P in keyof T]?: Part<T[P]>
 }

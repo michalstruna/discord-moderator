@@ -1,5 +1,6 @@
+import Handler from '../model/Handler'
 import CommandService from '../service/CommandService'
 
-export default () => {
+export default new Handler(() => {
     CommandService.load()
-}
+})

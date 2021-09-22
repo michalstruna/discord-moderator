@@ -9,7 +9,7 @@ import { ServerData, ServerRoles } from '../model/types'
 module ServerService {
 
     export const getById = async (id: string, guild: Guild): Promise<ServerData> => {
-        let server = await Db.Server.findOne({ id })
+        let server: ServerData = await Db.Server.findOne({ id }).lean()
     
         if (!server && guild) {
             server = await new Db.Server({ id }).save()

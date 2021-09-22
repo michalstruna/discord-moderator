@@ -1,4 +1,4 @@
-import { Action } from '../model/types'
+import { Action, ServerAction } from '../model/types'
 
 const { getActionPerms } = require('./Perms')
 
@@ -15,7 +15,7 @@ export const keyValueList = (pairs: [string, string][], bold = false) => pairs.m
     return `${edge}${key}:${edge} ${value}`
 }).join('\n')
 
-export const actionPerms = (serverAction: Action, everyoneId: string) => { // TODO: Move to action.
+export const actionPerms = (serverAction: ServerAction, everyoneId: string) => { // TODO: Move to action.
     const { allow, forbid } = getActionPerms(serverAction)
     const allowRoles = list(allow.length > 0 ? allow.map((r: string) => r === everyoneId ? everyone() : role(r)) : [everyone()], 'and')
     const forbidRoles = list(forbid.map((r: string) => r === everyoneId ? everyone() : role(r)), 'and')

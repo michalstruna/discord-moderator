@@ -1,7 +1,7 @@
 import { connect, model, Schema, Model, FilterQuery } from 'mongoose'
 
 import Config from '../constants/Config'
-import { ServerData as ServerData } from '../model/types'
+import { Part, ServerData as ServerData } from '../model/types'
 
 
 export const get = async <Item>(model: Model<Item>, filter: FilterQuery<Item>, upsert: boolean = false): Promise<Item> => {
@@ -14,7 +14,7 @@ export const get = async <Item>(model: Model<Item>, filter: FilterQuery<Item>, u
     return item
 }
 
-export const update = <Item>(model: Model<Item>, filter: FilterQuery<Item>, item: Partial<Item>): Promise<Item> => (
+export const update = <Item>(model: Model<Item>, filter: FilterQuery<Item>, item: Part<Item>): Promise<Item> => (
     model.findOneAndUpdate(filter, { ...filter, ...item }, { upsert: true, useFindAndModify: false, new: true }).lean() as any // TODO
 )
 

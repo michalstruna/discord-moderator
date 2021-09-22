@@ -92,7 +92,7 @@ module CommandService {
 
             if (error instanceof DefaultError) {
                 const errTitle = error.getTitle() === undefined ? 'Something bad happened' : error.getTitle()
-                MessageService.sendFail(meta.msg.channel, error.message, errTitle, error.getColor())
+                MessageService.sendFail(meta.msg.channel, error.message, errTitle || undefined, error.getColor())
             }
         }
     }

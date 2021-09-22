@@ -1,4 +1,4 @@
-import { GuildMember, Message, MessageEmbedOptions, TextChannel, Webhook, WebhookClient, Collection } from 'discord.js'
+import { GuildMember, Message, MessageEmbedOptions, TextBasedChannels, TextChannel, Webhook, WebhookClient } from 'discord.js'
 
 import Color from '../constants/Color'
 import Emoji from '../constants/Emoji'
@@ -18,7 +18,7 @@ module MessageService {
     export const reactSuccess = (msg: Message) => exports.react(msg, Emoji.SUCCESS)
     export const reactFail = (msg: Message) => exports.react(msg, Emoji.FAIL)
 
-    export const send = (channel: TextChannel, data: MessageEmbedOptions = {}, [color, emoji]: Theme = Theme.INFO) => {
+    export const send = (channel: TextBasedChannels, data: MessageEmbedOptions = {}, [color, emoji]: Theme = Theme.INFO) => {
         const embed = { ...data, color: data.color || color }
 
         if (embed.title) {
@@ -64,9 +64,9 @@ module MessageService {
         await webhookClient.send({ content: isPlain ? content : undefined, username: name, avatarURL: avatar, embeds: isPlain ? undefined : [content] })
     }
 
-    export const sendSuccess = (channel: TextChannel, description: string, title?: string, color?: Color) => send(channel, { description, title, color }, Theme.SUCCESS)
-    export const sendFail = (channel: TextChannel, description: string, title?: string, color?: Color) => send(channel, { description, title, color }, Theme.FAIL)
-    export const sendInfo = (channel: TextChannel, description: string, title?: string, color?: Color) => send(channel, { description, title, color })
+    export const sendSuccess = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { description, title, color }, Theme.SUCCESS)
+    export const sendFail = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { description, title, color }, Theme.FAIL)
+    export const sendInfo = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { description, title, color })
 
     export const parseCommand = (text: string, prefix: string): [string | null, ArgParser] => {
         const prefixRegex = new RegExp(`^${'\\' + prefix} *`)
