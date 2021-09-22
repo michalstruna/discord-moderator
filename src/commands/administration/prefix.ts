@@ -1,11 +1,9 @@
 import Command from '../../model/Command'
-
 import RoleType from '../../constants/RoleType'
 import Config from '../../constants/Config'
 import { Text, Switch } from '../../utils/Args'
-
-const MessageService = require('../../service/MessageService')
-const ServerService = require('../../service/ServerService')
+import MessageService from '../../service/MessageService'
+import ServerService from '../../service/ServerService'
 
 export default new Command({
     name: 'prefix',

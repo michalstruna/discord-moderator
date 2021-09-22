@@ -1,35 +1,41 @@
 import argv, { Arguments } from 'yargs-parser'
+import { ActionMeta } from '../model/types'
 
 const { InvalidInputError, NotFoundError } = require('./Errors')
 const { codeList } = require('./Outputs')
 const CommandService = require('../service/CommandService')
 
-const formatList = (vals: string[], getter = (x: string) => x) => codeList(vals.map(getter), 'and')
+const formatList = (vals: string[]) => codeList(vals, 'and')
 
-export class TestedArgsSet {
+type ParsedArgsMap = Record<string, string | string[]>
 
-    constructor(args, rules) {
+export class ParsedArgs {
+
+    private args: ParsedArgsMap
+    private rules: Arg[]
+
+    constructor(args: ParsedArgsMap, rules: Arg[]) {
         this.args = args
         this.rules = rules
     }
 
-    async parse(meta) {
-        const parsed = {}
+    async analyze(meta: ActionMeta) {
+        const analyzed: Record<string, any> = {}
 
         for (const rule of this.rules) {
-            const arg = this.args[rule.name]
+            const arg = this.args[rule.getName()]
 
             if (arg !== undefined) {
-                parsed[rule.name] = await rule.parse(arg, meta) // TODO: Promise.all?
+                analyzed[rule.getName()] = await rule.parse(arg, meta) // TODO: Promise.all?
             }
         }
 
-        return parsed
+        return analyzed
     }
 
 }
 
-export class ArgsSet {
+export class ArgParser {
 
     private args: Arguments
 
@@ -41,34 +47,33 @@ export class ArgsSet {
         return this.args._.shift()
     }
 
-    /** Test if args set can accept all rules. */
-    public test(rules: Arg[]) {
-        const tested = {}
+    public parse(rules: Arg[] = []) {
+        const parsed: ParsedArgsMap = {}
         let tmpRules = [...rules]
         let reqRules = [...rules.filter(r => r.isRequired())]
         let tmpArgs = [...this.args._]
 
         for (const key in this.args) {
-            if (key === '_') continue
+            if (key === '_') continue // Ignore positional args.
             const rule = tmpRules.find(r => r.getName() === key)
             const isList = rule instanceof List
             if (!rule) throw new InvalidInputError(`Unexpected argument \`${key}\`.`)
             if (!rule.test(this.args[key])) throw InvalidInputError(`Invalid argument \`${key}\`.`)
-            tested[key] = isList ? [this.args[key]] : this.args[key]
+            parsed[key] = isList ? [this.args[key]] : this.args[key]
 
             if (!isList || reqRules.length > tmpArgs.length) {
-                tmpRules = tmpRules.filter(r => r.name !== key)
-                reqRules = reqRules.filter(r => r.name != key)
+                tmpRules = tmpRules.filter(r => r.getName() !== key)
+                reqRules = reqRules.filter(r => r.getName() != key)
             }
         }
 
-        const reqExplRules = reqRules.filter(r => r.needName)
-        if (reqExplRules.length > 0) throw new InvalidInputError(`You have to specify ${formatList(reqExplRules, r => r.name)}`)
-        tmpRules = tmpRules.filter(r => !r.needName)
+        const reqExplRules = reqRules.filter(r => r.isExplicit())
+        if (reqExplRules.length > 0) throw new InvalidInputError(`You have to specify ${formatList(reqExplRules.map(r => r.getName()))}`)
+        tmpRules = tmpRules.filter(r => !r.isExplicit())
 
         while (true) {
             if (tmpRules.length === 0 && tmpArgs.length === 0) { // All rules and args are consumed.
-                return new TestedArgsSet(tested, rules)
+                return new ParsedArgs(parsed, rules)
             }
 
             if (tmpRules.length === 0 && tmpArgs.length > 0) { // There are args, but no rules.
@@ -76,32 +81,31 @@ export class ArgsSet {
             }
 
             if (tmpArgs.length === 0 && tmpRules.length > 0) { // There are rules, but no args.
-                if (reqRules.length == 0) return new TestedArgsSet(tested, rules)
-                throw new InvalidInputError(`You have to specify ${formatList(reqRules, r => r.name)}.`)
+                if (reqRules.length == 0) return new ParsedArgs(parsed, rules)
+                throw new InvalidInputError(`You have to specify ${formatList(reqRules.map(r => r.getName()))}.`)
             }
 
             const rule = tmpRules[0], arg = tmpArgs[0]
             const isList = rule instanceof List
 
-            if ((rule.required || reqRules.length < tmpArgs.length) && rule.test(arg)) { // Consume rule and arg.
-                tested[rule.name] = isList ? [...(tested[rule.name] || []), arg] : arg
+            if ((rule.isRequired() || reqRules.length < tmpArgs.length) && rule.test(arg)) { // Consume rule and arg.
+                parsed[rule.getName()] = isList ? [...(parsed[rule.getName()] as string[] || []), arg] : arg
 
                 if (!isList || reqRules.length > tmpArgs.length - 1) {
                     tmpRules.shift()
-                    if (rule.required) reqRules.shift()
+                    if (rule.isRequired()) reqRules.shift()
                 }
 
                 tmpArgs.shift()
                 continue
             }
 
-            if (!rule.required || (isList && tested[rule.name].length > 0)) { // For optional argument, it is possible consume only rule.
+            if (!rule.isRequired() || (isList && parsed[rule.getName()].length > 0)) { // For optional argument, it is possible consume only rule.
                 tmpRules.shift()
                 continue
             } else {
-                throw new InvalidInputError(`You have to specify ${formatList([rule.name])}.`)
+                throw new InvalidInputError(`You have to specify ${formatList([rule.getName()])}.`)
             }
-
         }
     }
 
@@ -121,6 +125,10 @@ export abstract class Arg {
     constructor(name: string, description?: string) {
         this.name = name
         this.description = description
+    }
+
+    public async parse(input: string | string[], meta: ActionMeta) {
+        return input
     }
 
     public getName() {
@@ -175,10 +183,6 @@ export abstract class Arg {
 }
 
 export class Text extends Arg {
-
-    public async parse(input: string) {
-        return input
-    }
 
 }
 
@@ -270,9 +274,10 @@ export class List extends Arg {
         return this.type.test(value)
     }
 
-    public async parse(values: string[]) {
-        const parsed = await Promise.all(values.map(this.type.parse))
-        return this.withJoin ? parsed.join(' ') : parsed
+    public async parse(values: string | string[], meta: ActionMeta) {
+        const arrayVals = Array.isArray(values) ? values : [values]
+        const parsed = await Promise.all(arrayVals.map(v => this.type.parse(v, meta)))
+        return this.withJoin ? parsed.join(' ') : parsed as any // TODO
     }
 
     public of(type: Text) {

@@ -1,6 +1,7 @@
 import { Client, Guild, GuildMember, Message, TextChannel } from 'discord.js'
 
 import RoleType from '../constants/RoleType'
+import { Arg } from '../utils/Args'
 
 export type DiscordId = string
 
@@ -16,12 +17,8 @@ export type ServerAction = {
 }
 
 export type ServerCommand = {
-    actions: Map<string, ServerAction>
+    actions: Record<string, ServerAction>
     enabled: boolean
-}
-
-export type Argument = {
-
 }
 
 export type Auth = {
@@ -29,29 +26,32 @@ export type Auth = {
     deny?: RoleType[]
 }
 
-export type Server = {
+export type ServerRoles = Record<RoleType, string>
+
+export type ServerData = {
     id: string
     prefix: string
-    commands: Map<string, ServerCommand>
-    roles: Map<RoleType, string>
+    commands: Record<string, ServerCommand>
+    roles: ServerRoles
 }
 
 export type ActionMeta = {
     msg: Message
     guild: Guild
     client: Client
-    server: Server
+    server: ServerData
     channel: TextChannel
     author: GuildMember
 }
 
 export type Action = {
     name: string
-    args?: Argument[],
+    args?: Arg[],
     auth?: Auth
     execute: (args: Record<string, any>, meta: ActionMeta) => Promise<void>
     description?: string
     examples?: string[][]
+    react?: boolean
 }
 
 export type CommandOptions = {

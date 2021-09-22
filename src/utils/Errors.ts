@@ -1,29 +1,37 @@
 import Color from '../constants/Color'
 
-const factory = (color: Color, defaultTitle: string | null) => class extends Error {
+export class DefaultError extends Error {
 
-    private _title: string | null
-    private _color: Color
+    private title: string | null
+    private color: Color
 
-    constructor(message: string, title: string | null = defaultTitle) {
+    constructor(message: string, title: string | null, color: Color) {
         super(message)
-        this._title = title
-        this._color = color
+        this.title = title
+        this.color = color
     }
 
-    public get title() {
-        return this._title
+    public getTitle() {
+        return this.title
     }
 
-    public get color() {
-        return this._color
+    public getColor() {
+        return this.color
     }
 
 }
 
-exports.InvalidInputError = factory(Color.RED, 'Invalid input')
-exports.UnauthorizedError = factory(Color.BLACK, 'Missing permissions')
-exports.ForbiddenError = factory(Color.ORANGE, 'Forbidden action')
-exports.NotFoundError = factory(Color.GRAY, null)
-exports.MentionNotFoundError = factory(Color.RED, 'Mention was not found')
-exports.MissingPermissionsError = factory(Color.BLACK, 'Missing permissions')
+const factory = (color: Color, defaultTitle: string | null) => class extends DefaultError {
+
+    constructor(message: string, title: string | null = defaultTitle) {
+        super(message, title, color)
+    }
+
+}
+
+export const InvalidInputError = factory(Color.RED, 'Invalid input')
+export const UnauthorizedError = factory(Color.BLACK, 'Missing permissions')
+export const ForbiddenError = factory(Color.ORANGE, 'Forbidden action')
+export const NotFoundError = factory(Color.GRAY, null)
+export const MentionNotFoundError = factory(Color.RED, 'Mention was not found')
+export const MissingPermissionsError = factory(Color.BLACK, 'Missing permissions')

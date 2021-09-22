@@ -1,7 +1,9 @@
-const fs = require('fs')
-const path = require('path')
+import { Client } from 'discord.js'
 
-module.exports = client => {
+import fs from 'fs'
+import path from 'path'
+
+export default (client: Client) => {
     for (const dir of ['client', 'guild']) {
         const files = fs.readdirSync(path.join(__dirname, '../events', dir))
 
