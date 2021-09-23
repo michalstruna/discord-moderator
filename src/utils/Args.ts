@@ -196,11 +196,11 @@ export class Text extends Arg {
 
 export class Cmd extends Text {
 
-    public async parse(input: string | string[], meta: ActionMeta) { // TODO: Array?
-        const command = await CommandService.getByName(input as string)
+    public async parse(value: string) {
+        const command = await CommandService.getByName(value)
 
         if (!command) {
-            throw new NotFoundError(`Command \`${input}\` was not found.`)
+            throw new NotFoundError(`Command \`${value}\` was not found.`)
         }
 
         return command
@@ -211,7 +211,7 @@ export class Cmd extends Text {
 export class Mention extends Text {
 
     public elseCurrent() {
-        // TODO
+        this.defaultValue = true
         return this
     }
 
@@ -219,7 +219,9 @@ export class Mention extends Text {
 
 export class Member extends Mention {
 
-    public static CURRENT = { description: 'yourself' }
+    public async parse(value: string, meta: ActionMeta) {
+
+    }
 
 }
 
@@ -227,11 +229,28 @@ export class Role extends Mention {
 
     public static EVERYONE = { description: 'everyone' }
 
+    public async parse(value: string, { msg }: ActionMeta) {
+        if (!value) return this.defaultValue ? msg.guild?.roles.everyone.id : null
+        const roleId = value.replace(/[^0-9]/g, '')
+        const roleById = msg.guild?.roles.cache.get(roleId) // Get by ID.
+        if (roleById) return roleById
+        const roleByName = msg.guild?.roles.cache.find(r => r.name.toLowerCase() === value.toLowerCase()) // Get by name.
+        if (roleByName) return roleByName
+        const roleByStart = msg.guild?.roles.cache.find(r => r.name.toLowerCase().startsWith(value.toLowerCase())) // Get by start.
+        if (roleByStart) return roleByStart
+        return msg.guild?.roles.cache.find(r => r.name.toLowerCase().includes(value.toLowerCase())) // Get by includes.
+    }
+
 }
 
 export class Channel extends Mention {
 
-    public static CURRENT = { description: 'current channel' }
+    public async parse(input: string, { msg }: ActionMeta) {
+        const channel = msg.guild?.channels.cache.get(input)
+        if (channel) return channel
+        if (this.defaultValue) return msg.channel
+        return null
+    }
 
 }
 
@@ -286,7 +305,7 @@ export class List extends Arg {
     public async parse(values: string | string[], meta: ActionMeta) {
         const arrayVals = Array.isArray(values) ? values : [values]
         const parsed = await Promise.all(arrayVals.map(v => this.type.parse(v, meta)))
-        return this.withJoin ? parsed.join(' ') : parsed as any // TODO
+        return this.withJoin ? parsed.join(' ') : parsed
     }
 
     public of(type: Text) {
