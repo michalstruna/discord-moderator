@@ -3,9 +3,11 @@ import { CommandOptions } from './types'
 class Command {
 
     private options: CommandOptions
+    private category: string
 
     public constructor(options: CommandOptions) {
         this.options = options
+        this.category = 'basic'
     }
 
     public getName() {
@@ -22,6 +24,18 @@ class Command {
 
     public getActions() {
         return this.options.actions
+    }
+
+    public getCategory() {
+        return this.category
+    }
+
+    public setCategory(category: string) {
+        this.category = category
+    }
+
+    public getOptions() {
+        return this.options
     }
 
 }

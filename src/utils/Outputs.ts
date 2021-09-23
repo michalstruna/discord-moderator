@@ -1,6 +1,5 @@
-import { Action, ServerAction } from '../model/types'
-
-const { getActionPerms } = require('./Perms')
+import { ServerAction } from '../model/types'
+import { getActionPerms } from './Perms'
 
 export const member = (id: string) => `<@${id}>`
 export const role = (id: string) => `<@&${id}>`

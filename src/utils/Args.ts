@@ -1,9 +1,9 @@
 import argv, { Arguments } from 'yargs-parser'
 import { ActionMeta } from '../model/types'
 
-const { InvalidInputError, NotFoundError } = require('./Errors')
-const { codeList } = require('./Outputs')
-const CommandService = require('../service/CommandService')
+import { InvalidInputError, NotFoundError } from './Errors'
+import { codeList } from './Outputs'
+import CommandService from '../service/CommandService'
 
 const formatList = (vals: string[]) => codeList(vals, 'and')
 
@@ -58,7 +58,7 @@ export class ArgParser {
             const rule = tmpRules.find(r => r.getName() === key)
             const isList = rule instanceof List
             if (!rule) throw new InvalidInputError(`Unexpected argument \`${key}\`.`)
-            if (!rule.test(this.args[key])) throw InvalidInputError(`Invalid argument \`${key}\`.`)
+            if (!rule.test(this.args[key])) throw new InvalidInputError(`Invalid argument \`${key}\`.`)
             parsed[key] = isList ? [this.args[key]] : this.args[key]
 
             if (!isList || reqRules.length > tmpArgs.length) {
@@ -127,7 +127,7 @@ export abstract class Arg {
         this.description = description
     }
 
-    public async parse(input: string | string[], meta: ActionMeta) {
+    public async parse(input: string | string[], meta: ActionMeta): Promise<any> {
         return input
     }
 
@@ -196,11 +196,11 @@ export class Text extends Arg {
 
 export class Cmd extends Text {
 
-    async parse(value: string) {
-        const command = await CommandService.getByName(value)
+    public async parse(input: string | string[], meta: ActionMeta) { // TODO: Array?
+        const command = await CommandService.getByName(input as string)
 
         if (!command) {
-            throw new NotFoundError(`Command \`${value}\` was not found.`)
+            throw new NotFoundError(`Command \`${input}\` was not found.`)
         }
 
         return command

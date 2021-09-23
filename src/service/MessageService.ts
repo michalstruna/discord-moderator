@@ -69,7 +69,7 @@ module MessageService {
     export const sendInfo = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { description, title, color })
 
     export const parseCommand = (text: string, prefix: string): [string | null, ArgParser] => {
-        const prefixRegex = new RegExp(`^${'\\' + prefix} *`)
+        const prefixRegex = new RegExp(`^${(/^[a-z0-9]/g.test(prefix) ? '' : '\\') + prefix} *`)
         const argParser = new ArgParser(text.trim().replace(prefixRegex, ''))
         const commandName = prefixRegex.test(text) ? argParser.shift()! : null
         return [commandName, argParser]
