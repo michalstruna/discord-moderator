@@ -54,7 +54,7 @@ module CommandService {
         return result
     }
 
-    export const getByName = (name: string) => {
+    export const getByName = (name: string): CommandOptions | undefined => {
         return commands.get(aliases.get(name) || name)
     }
 

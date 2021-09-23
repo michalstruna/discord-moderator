@@ -1,9 +1,9 @@
 import argv, { Arguments } from 'yargs-parser'
 import { ActionMeta } from '../model/types'
 
-const { InvalidInputError, NotFoundError } = require('./Errors')
-const { codeList } = require('./Outputs')
-const CommandService = require('../service/CommandService')
+import { InvalidInputError, NotFoundError } from './Errors'
+import { codeList } from './Outputs'
+import CommandService from '../service/CommandService'
 
 const formatList = (vals: string[]) => codeList(vals, 'and')
 
@@ -58,7 +58,7 @@ export class ArgParser {
             const rule = tmpRules.find(r => r.getName() === key)
             const isList = rule instanceof List
             if (!rule) throw new InvalidInputError(`Unexpected argument \`${key}\`.`)
-            if (!rule.test(this.args[key])) throw InvalidInputError(`Invalid argument \`${key}\`.`)
+            if (!rule.test(this.args[key])) throw new InvalidInputError(`Invalid argument \`${key}\`.`)
             parsed[key] = isList ? [this.args[key]] : this.args[key]
 
             if (!isList || reqRules.length > tmpArgs.length) {
@@ -127,7 +127,7 @@ export abstract class Arg {
         this.description = description
     }
 
-    public async parse(input: string | string[], meta: ActionMeta) {
+    public async parse(input: string | string[], meta: ActionMeta): Promise<any> {
         return input
     }
 
@@ -196,7 +196,7 @@ export class Text extends Arg {
 
 export class Cmd extends Text {
 
-    async parse(value: string) {
+    public async parse(value: string) {
         const command = await CommandService.getByName(value)
 
         if (!command) {
@@ -211,7 +211,7 @@ export class Cmd extends Text {
 export class Mention extends Text {
 
     public elseCurrent() {
-        // TODO
+        this.defaultValue = true
         return this
     }
 
@@ -219,7 +219,9 @@ export class Mention extends Text {
 
 export class Member extends Mention {
 
-    public static CURRENT = { description: 'yourself' }
+    public async parse(value: string, meta: ActionMeta) {
+
+    }
 
 }
 
@@ -227,11 +229,28 @@ export class Role extends Mention {
 
     public static EVERYONE = { description: 'everyone' }
 
+    public async parse(value: string, { msg }: ActionMeta) {
+        if (!value) return this.defaultValue ? msg.guild?.roles.everyone.id : null
+        const roleId = value.replace(/[^0-9]/g, '')
+        const roleById = msg.guild?.roles.cache.get(roleId) // Get by ID.
+        if (roleById) return roleById
+        const roleByName = msg.guild?.roles.cache.find(r => r.name.toLowerCase() === value.toLowerCase()) // Get by name.
+        if (roleByName) return roleByName
+        const roleByStart = msg.guild?.roles.cache.find(r => r.name.toLowerCase().startsWith(value.toLowerCase())) // Get by start.
+        if (roleByStart) return roleByStart
+        return msg.guild?.roles.cache.find(r => r.name.toLowerCase().includes(value.toLowerCase())) // Get by includes.
+    }
+
 }
 
 export class Channel extends Mention {
 
-    public static CURRENT = { description: 'current channel' }
+    public async parse(input: string, { msg }: ActionMeta) {
+        const channel = msg.guild?.channels.cache.get(input)
+        if (channel) return channel
+        if (this.defaultValue) return msg.channel
+        return null
+    }
 
 }
 
@@ -286,7 +305,7 @@ export class List extends Arg {
     public async parse(values: string | string[], meta: ActionMeta) {
         const arrayVals = Array.isArray(values) ? values : [values]
         const parsed = await Promise.all(arrayVals.map(v => this.type.parse(v, meta)))
-        return this.withJoin ? parsed.join(' ') : parsed as any // TODO
+        return this.withJoin ? parsed.join(' ') : parsed
     }
 
     public of(type: Text) {
