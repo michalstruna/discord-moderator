@@ -4,6 +4,7 @@ import { ActionMeta } from '../model/types'
 import { InvalidInputError, NotFoundError } from './Errors'
 import { codeList } from './Outputs'
 import CommandService from '../service/CommandService'
+import { multiFind } from '../utils/Collections'
 
 const formatList = (vals: string[]) => codeList(vals, 'and')
 
@@ -157,9 +158,8 @@ export abstract class Arg {
 
     public toString() {
         let result = this.name
-        if (this.needName) result = `-${this.name} ${this.name}`
-        if (!this.required) result += '?'
-        result = `[${result}]`
+        if (this.needName) result = this.required ? `-${this.name} ${this.name}` : `-${this.name} <${this.name}>`
+        result = this.required ? `<${result}>` : `[${result}]`
         return result
     }
 
@@ -210,46 +210,43 @@ export class Cmd extends Text {
 
 export class Mention extends Text {
 
-    public elseCurrent() {
-        this.defaultValue = true
-        return this
-    }
-
 }
 
 export class Member extends Mention {
 
-    public async parse(value: string, meta: ActionMeta) {
+    public static CURRENT = {}
 
+    public async parse(value: string, { msg }: ActionMeta) {
+        const member = multiFind(msg.guild!.members.cache, value, m => ([m.displayName, m.user.tag]))
+        if (member) return member
+        if (this.defaultValue === Member.CURRENT) return msg.member
+        throw new NotFoundError(`Member \`${value}\` was not found.`)
     }
 
 }
 
 export class Role extends Mention {
 
-    public static EVERYONE = { description: 'everyone' }
+    public static EVERYONE = {}
 
     public async parse(value: string, { msg }: ActionMeta) {
-        if (!value) return this.defaultValue ? msg.guild?.roles.everyone.id : null
-        const roleId = value.replace(/[^0-9]/g, '')
-        const roleById = msg.guild?.roles.cache.get(roleId) // Get by ID.
-        if (roleById) return roleById
-        const roleByName = msg.guild?.roles.cache.find(r => r.name.toLowerCase() === value.toLowerCase()) // Get by name.
-        if (roleByName) return roleByName
-        const roleByStart = msg.guild?.roles.cache.find(r => r.name.toLowerCase().startsWith(value.toLowerCase())) // Get by start.
-        if (roleByStart) return roleByStart
-        return msg.guild?.roles.cache.find(r => r.name.toLowerCase().includes(value.toLowerCase())) // Get by includes.
+        const role = multiFind(msg.guild!.roles.cache, value, r => ([r.name]))
+        if (role) return role
+        if (this.defaultValue === Role.EVERYONE) return msg.guild!.roles.everyone
+        throw new NotFoundError(`Role \`${value}\` was not found.`)
     }
 
 }
 
 export class Channel extends Mention {
 
+    public static CURRENT = {}
+
     public async parse(input: string, { msg }: ActionMeta) {
         const channel = msg.guild?.channels.cache.get(input)
         if (channel) return channel
-        if (this.defaultValue) return msg.channel
-        return null
+        if (this.defaultValue === Channel.CURRENT) return msg.channel
+        throw new NotFoundError(`Channel \`${input}\` was not found.`)
     }
 
 }
@@ -270,7 +267,8 @@ export class Bool extends Arg {
     }
 
     public toString() {
-        return super.toString().replace('[', '[-')
+        if (this.required) return super.toString().replace(/[\[\]\<\>]/g, '').replace(/ .*/, '')
+        return super.toString().split(' ')[0] + ']'
     }
 
 }
@@ -295,7 +293,7 @@ export class List extends Arg {
     }
 
     public toString() {
-        return super.toString().replace(']', '...]')
+        return super.toString().replace('>]', '...>]')
     }
 
     public test(value: string) {

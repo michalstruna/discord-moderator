@@ -10,8 +10,8 @@ export default new Command({
         {
             name: 'send',
             args: [
-                new Channel('channel', 'If not provided, send to current channel.' ).elseCurrent(),
-                new Member('as', 'Send message as webhook with identity of specified user.').explicit(),
+                new Channel('channel', 'If not provided, send to current channel.' ).default(Channel.CURRENT),
+                new Member('as', 'Send message as webhook with identity of specified user.').default(Member.CURRENT).explicit(),
                 new Bool('server', 'Send message as webhook with identity of server.'),
                 new List('message', 'Text you want to send.').req().join()
             ],
