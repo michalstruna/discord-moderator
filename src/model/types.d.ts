@@ -41,11 +41,16 @@ export type ActionMeta = {
     server: ServerData
 }
 
-export type Action = {
+type ArgArrayToObject<A extends readonly Arg<any, any>[]> = { [T in A[number]
+    as T extends Arg<infer N, any> ? N : never
+    ]: T extends Arg<any, infer V> ? V : never } extends infer O ? { [K in keyof O]: O[K] } : never
+  
+
+export type ActionOptions<A extends readonly Arg<any, any>[]> = {
     name: string
-    args?: Arg[],
+    args?: readonly [...A],
     auth?: Auth
-    execute: (args: Record<string, any>, meta: ActionMeta) => Promise<void>
+    execute: (args: ArgArrayToObject<A>, meta: ActionMeta) => Promise<void>
     description?: string
     examples?: string[][]
     react?: boolean
@@ -55,7 +60,7 @@ export type CommandOptions = {
     name: string
     aliases?: string[]
     description?: string
-    actions: Action[]
+    actions: ActionOptions<any>[]
 }
 
 export type Part<T> = {

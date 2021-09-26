@@ -4,7 +4,7 @@ import path from 'path'
 import Color from '../constants/Color'
 import Command from '../model/Command'
 
-import { Action, ActionMeta, CommandOptions, Part, ServerAction, ServerAuth, ServerCommand, ServerRoles } from '../model/types'
+import { ActionOptions, ActionMeta, CommandOptions, Part, ServerAction, ServerAuth, ServerCommand, ServerRoles } from '../model/types'
 import { ArgParser, ParsedArgs } from '../utils/Args'
 import { DefaultError } from '../utils/Errors'
 import MessageService from './MessageService'
@@ -64,7 +64,7 @@ module CommandService {
         return Array.from(commands.values())
     }
 
-    const findAction = (actions: Action[], argParser: ArgParser): [Action, ParsedArgs] => {
+    const findAction = (actions: ActionOptions[], argParser: ArgParser): [ActionOptions, ParsedArgs] => {
         const errors = []
 
         for (const action of actions) {

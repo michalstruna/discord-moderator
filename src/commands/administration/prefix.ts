@@ -1,4 +1,4 @@
-import Command from '../../model/Command'
+import Command, { Action } from '../../model/Command'
 import RoleType from '../../constants/RoleType'
 import Config from '../../constants/Config'
 import { Text, Switch } from '../../utils/Args'
@@ -10,7 +10,7 @@ export default new Command({
     description: 'Manage prefix for server.',
     aliases: ['pref'],
     actions: [
-        {
+        Action({
             name: 'set',
             args: [
                 new Text('prefix', `New prefix (max. length ${Config.MAX_PREFIX_LENGTH}).`).max(Config.MAX_PREFIX_LENGTH).req()
@@ -22,7 +22,7 @@ export default new Command({
             },
             description: 'Set new prefix.',
             examples: [['&']]
-        },
+        }),
         {
             name: 'reset',
             args: [

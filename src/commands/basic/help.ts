@@ -1,4 +1,4 @@
-import { Action, ActionMeta, CommandOptions, ServerData } from "../../model/types"
+import { ActionOptions, ActionMeta, CommandOptions, ServerData } from "../../model/types"
 import Emoji from '../../constants/Emoji'
 import CommandService from '../../service/CommandService'
 import MessageService from '../../service/MessageService'
@@ -10,7 +10,7 @@ const getHelp = async (commands: CommandOptions[], { server }: ActionMeta) => {
     return commands.map(command => `**${command.name}:** ${command.description} ${Emoji.SUCCESS}\n${command.actions.map(a => `> **${a.name}:** ${getActionPattern(server, command, a)} - ${a.description}`).join('\n')}`).join('\n\n')
 }
 
-const getActionPattern = (server: ServerData, command: CommandOptions, action: Action) => {
+const getActionPattern = (server: ServerData, command: CommandOptions, action: ActionOptions) => {
     return `\`${[server.prefix + command.name, ...(action.args || []).map(arg => arg.toString())].join(' ')}\``
 }
 
