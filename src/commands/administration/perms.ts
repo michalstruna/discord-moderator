@@ -14,8 +14,8 @@ export default new Command({
             args: [
                 new Cmd('command', 'Name of command.').req(),
                 new Text('action', 'Command action.'),
-                new List('roles', 'List of allowed roles.').of(new Role('role')).req(),
-                new List('except', 'List of forbidden roles.').of(new Role('role')).explicit()
+                new List('roles', 'List of allowed roles.', new Role('role')).req(),
+                new List('except', 'List of forbidden roles.', new Role('role')).explicit()
             ],
             auth: { permit: [RoleType.ADMIN] },
             execute: async ({ command, action, roles, except }, {  }) => {

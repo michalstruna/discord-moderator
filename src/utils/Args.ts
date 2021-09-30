@@ -1,6 +1,6 @@
 import argv, { Arguments } from 'yargs-parser'
 import { ActionMeta, CommandOptions } from '../model/types'
-import { GuildMember, Role as GuildRole, GuildChannel, ThreadChannel, DMChannel, PartialDMChannel } from 'discord.js'
+import { GuildMember, Role as GuildRole, GuildChannel, ThreadChannel, DMChannel, PartialDMChannel, TextChannel, TextBasedChannels } from 'discord.js'
 
 import { InvalidInputError, NotFoundError } from './Errors'
 import { codeList } from './Outputs'
@@ -235,12 +235,12 @@ export class Role<Name extends string> extends Arg<Name, GuildRole> {
 
 }
 
-export class Channel<Name extends string> extends Arg<Name, GuildChannel | ThreadChannel | PartialDMChannel | DMChannel> {
+export class Channel<Name extends string> extends Arg<Name, TextBasedChannels> {
 
     public static CURRENT = {}
 
     public async parse(input: string, { msg }: ActionMeta) {
-        const channel = msg.guild?.channels.cache.get(input)
+        const channel = msg.guild?.channels.cache.get(input) as TextBasedChannels
         if (channel) return channel
         if (this.defaultValue === Channel.CURRENT) return msg.channel
         throw new NotFoundError(`Channel \`${input}\` was not found.`)
