@@ -6,7 +6,7 @@ import Command from '../model/Command'
 
 import { ActionOptions, ActionMeta, CommandOptions, Part, ServerAction, ServerAuth, ServerCommand, ServerRoles } from '../model/types'
 import { ArgParser, ParsedArgs } from '../model/Arg'
-import { DefaultError } from '../utils/Errors'
+import { DefaultError } from '../model/Error'
 import MessageService from './MessageService'
 
 const commands = new Map<string, CommandOptions>()

@@ -2,7 +2,7 @@ import argv, { Arguments } from 'yargs-parser'
 import { ActionMeta, CommandOptions } from './types'
 import { GuildMember, Role as GuildRole, TextBasedChannels } from 'discord.js'
 
-import { InvalidInputError, NotFoundError } from '../utils/Errors'
+import { InvalidInputError, NotFoundError } from './Error'
 import { codeList } from '../utils/Outputs'
 import CommandService from '../service/CommandService'
 import { multiFind } from '../utils/Collections'
