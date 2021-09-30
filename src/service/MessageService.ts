@@ -1,8 +1,9 @@
-import { GuildMember, Message, MessageEmbedOptions, TextBasedChannels, TextChannel, Webhook, WebhookClient } from 'discord.js'
+import { GuildMember, Message, MessageEmbedOptions, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
 
 import Color from '../constants/Color'
 import Emoji from '../constants/Emoji'
 import { ArgParser } from '../utils/Args'
+import { ForbiddenError } from '../utils/Errors'
 
 type Theme = [Color, Emoji]
 
@@ -37,11 +38,12 @@ module MessageService {
 
     const webhooks: Server = {}
 
-    export const sendMemberWebhook = async (channel: TextChannel, member: GuildMember, content: string | MessageEmbedOptions) => {
+    export const sendMemberWebhook = async (channel: TextBasedChannels, member: GuildMember, content: string | MessageEmbedOptions) => {
         return await sendWebhook(channel, member.user.displayAvatarURL({ dynamic: true }), member.displayName, content)
     }
 
-    export const sendWebhook = async (channel: TextChannel, avatar: string, name: string, content: string | MessageEmbedOptions) => {
+    export const sendWebhook = async (channel: TextBasedChannels, avatar: string, name: string, content: string | MessageEmbedOptions) => {
+        if (!('guild' in channel) || !('createWebhook' in channel)) throw new ForbiddenError('Webhooks are not supported here.')
         if (!webhooks[channel.guild.id]) webhooks[channel.guild.id] = {}
         if (!webhooks[channel.guild.id][channel.id]) webhooks[channel.guild.id][channel.id] = {}
 
@@ -51,7 +53,6 @@ module MessageService {
         if (!channelList[id]) {
             if (Object.values(channelList).length >= 8) {
                 for (const channelId in channelList) channelList[channelId][0].delete()
-
             }
 
             const webhook = await channel.createWebhook('Bot')

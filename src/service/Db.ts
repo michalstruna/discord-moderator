@@ -9,14 +9,14 @@ module Db {
         let item: Item = await model.findOne(filter).lean()
 
         if (!item && upsert) {
-            item = await new model(filter).save() as any // TODO
+            item = (await new model(filter).save()).toObject() as Item
         }
 
         return item
     }
 
     export const update = <Item>(model: Model<Item>, filter: FilterQuery<Item>, item: Part<Item>): Promise<Item> => (
-        model.findOneAndUpdate(filter, { ...filter, ...item }, { upsert: true, useFindAndModify: false, new: true }).lean() as any // TODO
+        model.findOneAndUpdate(filter, { ...filter, ...item }, { upsert: true, useFindAndModify: false, new: true }).lean() as any
     )
 
     // ==============================================

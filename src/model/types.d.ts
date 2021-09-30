@@ -1,4 +1,4 @@
-import { Client, Guild, GuildMember, Message, TextBasedChannel, TextChannel } from 'discord.js'
+import { Client, Message } from 'discord.js'
 
 import RoleType from '../constants/RoleType'
 import { Arg } from '../utils/Args'
@@ -41,14 +41,14 @@ export type ActionMeta = {
     server: ServerData
 }
 
-type ArgArrayToObject<A extends readonly Arg<any, any>[]> = { [T in A[number]
-    as T extends Arg<infer N, any> ? N : never
-    ]: T extends Arg<any, infer V> ? V : never } extends infer O ? { [K in keyof O]: O[K] } : never
+type ArgArrayToObject<Args extends readonly Arg<any, any>[]> = {
+    [T in Args[number] as T extends Arg<infer Name, any> ? Name : never]: T extends Arg<any, infer Result> ? Result : never
+} extends infer O ? { [K in keyof O]: O[K] } : never
   
 
 export type ActionOptions<A extends readonly Arg<any, any>[]> = {
     name: string
-    args?: readonly [...A],
+    args?: readonly [...A]
     auth?: Auth
     execute: (args: ArgArrayToObject<A>, meta: ActionMeta) => Promise<void>
     description?: string

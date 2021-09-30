@@ -13,7 +13,7 @@ export default new Command({
         Action({
             name: 'set',
             args: [
-                new Text('prefix', `New prefix (max. length ${Config.MAX_PREFIX_LENGTH}).`).max(Config.MAX_PREFIX_LENGTH).req(),
+                new Text('prefix', `New prefix (max. length ${Config.MAX_PREFIX_LENGTH}).`).max(Config.MAX_PREFIX_LENGTH).req()
             ],
             auth: { permit: [RoleType.ADMIN] },
             execute: async ({ prefix }, { msg }) => {

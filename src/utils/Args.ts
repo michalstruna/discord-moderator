@@ -1,6 +1,6 @@
 import argv, { Arguments } from 'yargs-parser'
 import { ActionMeta, CommandOptions } from '../model/types'
-import { GuildMember, Role as GuildRole, GuildChannel, ThreadChannel, DMChannel, PartialDMChannel, TextChannel, TextBasedChannels } from 'discord.js'
+import { GuildMember, Role as GuildRole, TextBasedChannels } from 'discord.js'
 
 import { InvalidInputError, NotFoundError } from './Errors'
 import { codeList } from './Outputs'
@@ -14,9 +14,9 @@ type ParsedArgsMap = Record<string, string | string[]>
 export class ParsedArgs {
 
     private args: ParsedArgsMap
-    private rules: Arg<any, any>[] // TODO: Any.
+    private rules: Arg<any, any>[]
 
-    constructor(args: ParsedArgsMap, rules: Arg<any, any>[]) { // TODO: Any.
+    constructor(args: ParsedArgsMap, rules: Arg<any, any>[]) {
         this.args = args
         this.rules = rules
     }
@@ -28,7 +28,7 @@ export class ParsedArgs {
             const arg = this.args[rule.getName()]
 
             if (arg !== undefined) {
-                analyzed[rule.getName()] = await rule.parse(arg, meta) // TODO: Promise.all?
+                analyzed[rule.getName()] = await rule.parse(arg, meta)
             }
         }
 
@@ -49,7 +49,7 @@ export class ArgParser {
         return this.args._.shift()
     }
 
-    public parse(rules: Arg<any, any>[] = []) { // TODO: Any.
+    public parse(rules: Arg<any, any>[] = []) {
         const parsed: ParsedArgsMap = {}
         let tmpRules = [...rules]
         let reqRules = [...rules.filter(r => r.isRequired())]
@@ -113,9 +113,9 @@ export class ArgParser {
 
 }
 
-export class Arg<Name extends string, Type> {
+export abstract class Arg<Name extends string, Result> {
 
-    protected name: Name
+    protected name?: Name
     protected description?: string
     
     protected needName?: boolean
@@ -124,12 +124,12 @@ export class Arg<Name extends string, Type> {
     protected maximum?: number
     protected minimum?: number
 
-    constructor(name: Name, description?: string) {
+    constructor(name?: Name, description?: string) {
         this.name = name
         this.description = description
     }
 
-    public async parse(input: string | string[], meta: ActionMeta): Promise<Type> {
+    public async parse(input: string | string[], meta: ActionMeta): Promise<Result> {
         return input as any
     }
 
@@ -158,7 +158,7 @@ export class Arg<Name extends string, Type> {
     }
 
     public toString() {
-        let result: string = this.name
+        let result: string = this.name || ''
         if (this.needName) result = this.required ? `-${this.name} ${this.name}` : `-${this.name} <${this.name}>`
         result = this.required ? `<${result}>` : `[${result}]`
         return result
@@ -192,6 +192,17 @@ export class Arg<Name extends string, Type> {
 }
 
 export class Text<Name extends string> extends Arg<Name, string> {
+
+    protected _multi: boolean = false
+
+    public multi(isMulti = true) {
+        this._multi = isMulti
+        return this
+    }
+
+    public isMulti() {
+        return this._multi
+    }
 
 }
 
@@ -258,7 +269,7 @@ export class Int<Name extends string> extends Real<Name> {
 
 export class Bool<Name extends string> extends Arg<Name, boolean> {
 
-    constructor(name: Name, description?: string) {
+    constructor(name?: Name, description?: string) {
         super(name, description)
         this.explicit()
     }
@@ -272,19 +283,20 @@ export class Bool<Name extends string> extends Arg<Name, boolean> {
 
 export class Switch<Name extends string> extends Bool<Name> {
 
-    constructor(name: Name, description?: string) {
+    constructor(name?: Name, description?: string) {
         super(name, description)
         this.req()
     }
 
 }
 
-export class List<Name extends string, Type extends Arg<Name, Result>, Result> extends Arg<Name, Result[]> {
+type GetResult<T> = T extends Arg<any, infer Result> ? Result : never
+
+export class List<Name extends string, Type extends Arg<any, any>> extends Arg<Name, any> {
 
     protected type: Type
-    protected withJoin?: boolean
 
-    constructor(name: Name, type: Type, description?: string) {
+    constructor(name: Name, description: string, type: Type) {
         super(name, description)
         this.type = type
     }
@@ -297,15 +309,10 @@ export class List<Name extends string, Type extends Arg<Name, Result>, Result> e
         return this.type.test(value)
     }
 
-    public async parse(values: string | string[], meta: ActionMeta) {
+    public async parse(values: string[], meta: ActionMeta): Promise<GetResult<Type>[]> {
         const arrayVals = Array.isArray(values) ? values : [values]
         const parsed = await Promise.all(arrayVals.map(v => this.type.parse(v, meta)))
-        return parsed//return this.withJoin ? parsed.join(' ') : parsed // TODO: Join.
-    }
-
-    public join(withJoin: boolean = true) {
-        this.withJoin = withJoin
-        return this
+        return parsed
     }
 
 }

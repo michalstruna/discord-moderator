@@ -3,28 +3,28 @@ import MessageService from '../../service/MessageService'
 import ServerService from '../../service/ServerService'
 import { Text, List, Role, Bool, Cmd } from '../../utils/Args'
 import { role, keyValueList, actionPerms, everyone } from '../../utils/Outputs'
-import Command from '../../model/Command'
+import Command, { Action } from '../../model/Command'
  
 export default new Command({
     name: 'perms',
     description: 'Manage command permissions.',
     actions: [
-        {
+        Action({
             name: 'set',
             args: [
                 new Cmd('command', 'Name of command.').req(),
                 new Text('action', 'Command action.'),
-                new List('roles', 'List of allowed roles.', new Role('role')).req(),
-                new List('except', 'List of forbidden roles.', new Role('role')).explicit()
+                new List('roles', 'List of allowed roles.', new Role()).req(),
+                new List('except', 'List of forbidden roles.', new Role()).explicit()
             ],
             auth: { permit: [RoleType.ADMIN] },
             execute: async ({ command, action, roles, except }, {  }) => {
-
+                
             },
             description: 'Set perms for command/action.',
             examples: [['echo', '@Admin', '@Verified', '-except', '@Muted']]
-        },
-        {
+        }),
+        Action({
             name: 'default',
             args: [
                 new Bool('default').req(),
@@ -39,8 +39,8 @@ export default new Command({
             },
             description: 'Set default perm roles.',
             examples: [['-default', '@Admin', '@Moderator']]
-        },
-        {
+        }),
+        Action({
             name: 'reset',
             args: [
                 new Bool('reset').req(),
@@ -52,8 +52,8 @@ export default new Command({
             },
             description: 'Reset all perms or perms of command.',
             examples: [['-reset'], ['-reset', 'prefix']]
-        },
-        {
+        }),
+        Action({
             name: 'get',
             args: [
                 new Cmd('command')
@@ -62,8 +62,8 @@ export default new Command({
                 if (command) {
                     const serverCommand = server.commands[command.name]
 
-                    MessageService.sendInfo(msg.channel, keyValueList(command.actions.map((a: any) => ( // TODO
-                        [a.name, actionPerms(serverCommand.actions[a.name], msg.guild!.roles.everyone.id)]
+                    MessageService.sendInfo(msg.channel, keyValueList(command.actions.map(action => (
+                        [action.name, actionPerms(serverCommand.actions[action.name], msg.guild!.roles.everyone.id)]
                     )), true), `Perms • ${command.name}`)
                 } else {
                     const roles = keyValueList([
@@ -78,6 +78,6 @@ export default new Command({
             },
             description: 'Show global perms settings or perms for command.',
             examples: [['prefix']]
-        },
+        }),
     ]
 })
