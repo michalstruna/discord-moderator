@@ -1,4 +1,4 @@
-import { Arg } from '../utils/Args'
+import { Arg } from './Arg'
 import { ActionOptions, CommandOptions } from './types'
 
 export const Action = <A extends readonly Arg<any, any>[]>(options: ActionOptions<A>) => {

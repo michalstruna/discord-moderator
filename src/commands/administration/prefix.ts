@@ -1,7 +1,7 @@
 import Command, { Action } from '../../model/Command'
 import RoleType from '../../constants/RoleType'
 import Config from '../../constants/Config'
-import { Text, Switch } from '../../utils/Args'
+import { Text, Switch } from '../../model/Arg'
 import MessageService from '../../service/MessageService'
 import ServerService from '../../service/ServerService'
 

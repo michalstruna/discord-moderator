@@ -1,7 +1,7 @@
 import RoleType from '../../constants/RoleType'
 import MessageService from '../../service/MessageService'
 import ServerService from '../../service/ServerService'
-import { Text, List, Role, Bool, Cmd } from '../../utils/Args'
+import { Text, List, Role, Bool, Cmd } from '../../model/Arg'
 import { role, keyValueList, actionPerms, everyone } from '../../utils/Outputs'
 import Command, { Action } from '../../model/Command'
  

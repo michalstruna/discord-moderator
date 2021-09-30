@@ -1,7 +1,7 @@
 import { Client, Message } from 'discord.js'
 
 import RoleType from '../constants/RoleType'
-import { Arg } from '../utils/Args'
+import { Arg } from './Arg'
 
 export type DiscordId = string
 
@@ -46,7 +46,7 @@ type ArgArrayToObject<Args extends readonly Arg<any, any>[]> = {
 } extends infer O ? { [K in keyof O]: O[K] } : never
   
 
-export type ActionOptions<A extends readonly Arg<any, any>[]> = {
+export type ActionOptions<A extends readonly Arg<any, any>[] = any> = {
     name: string
     args?: readonly [...A]
     auth?: Auth

@@ -1,9 +1,9 @@
 import argv, { Arguments } from 'yargs-parser'
-import { ActionMeta, CommandOptions } from '../model/types'
+import { ActionMeta, CommandOptions } from './types'
 import { GuildMember, Role as GuildRole, TextBasedChannels } from 'discord.js'
 
-import { InvalidInputError, NotFoundError } from './Errors'
-import { codeList } from './Outputs'
+import { InvalidInputError, NotFoundError } from '../utils/Errors'
+import { codeList } from '../utils/Outputs'
 import CommandService from '../service/CommandService'
 import { multiFind } from '../utils/Collections'
 
@@ -14,9 +14,9 @@ type ParsedArgsMap = Record<string, string | string[]>
 export class ParsedArgs {
 
     private args: ParsedArgsMap
-    private rules: Arg<any, any>[]
+    private rules: readonly Arg<any, any>[]
 
-    constructor(args: ParsedArgsMap, rules: Arg<any, any>[]) {
+    constructor(args: ParsedArgsMap, rules: readonly Arg<any, any>[]) {
         this.args = args
         this.rules = rules
     }
@@ -49,7 +49,7 @@ export class ArgParser {
         return this.args._.shift()
     }
 
-    public parse(rules: Arg<any, any>[] = []) {
+    public parse(rules: readonly Arg<any, any>[] = []) {
         const parsed: ParsedArgsMap = {}
         let tmpRules = [...rules]
         let reqRules = [...rules.filter(r => r.isRequired())]

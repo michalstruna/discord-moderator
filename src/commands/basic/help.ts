@@ -3,8 +3,8 @@ import Emoji from '../../constants/Emoji'
 import CommandService from '../../service/CommandService'
 import MessageService from '../../service/MessageService'
 import { actionPerms } from '../../utils/Outputs'
-import { Cmd } from "../../utils/Args"
-import Command from "../../model/Command"
+import { Cmd } from "../../model/Arg"
+import Command, { Action } from "../../model/Command"
 
 const getHelp = async (commands: CommandOptions[], { server }: ActionMeta) => {
     return commands.map(command => `**${command.name}:** ${command.description} ${Emoji.SUCCESS}\n${command.actions.map(a => `> **${a.name}:** ${getActionPattern(server, command, a)} - ${a.description}`).join('\n')}`).join('\n\n')
@@ -55,7 +55,7 @@ export default new Command({
     description: 'Show help.',
     aliases: ['?', 'man', 'doc', 'docs', 'cmd', 'command', 'commands'],
     actions: [
-        {
+        Action({
             name: 'get',
             args: [
                 new Cmd('command', 'Name of command.')
@@ -70,6 +70,6 @@ export default new Command({
             },
             description: 'Show general help or command help.',
             examples: [[], ['prefix']]
-        }
+        })
     ]
 })

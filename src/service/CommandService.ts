@@ -5,7 +5,7 @@ import Color from '../constants/Color'
 import Command from '../model/Command'
 
 import { ActionOptions, ActionMeta, CommandOptions, Part, ServerAction, ServerAuth, ServerCommand, ServerRoles } from '../model/types'
-import { ArgParser, ParsedArgs } from '../utils/Args'
+import { ArgParser, ParsedArgs } from '../model/Arg'
 import { DefaultError } from '../utils/Errors'
 import MessageService from './MessageService'
 

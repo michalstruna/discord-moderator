@@ -2,7 +2,7 @@ import { GuildMember, Message, MessageEmbedOptions, TextBasedChannels, Webhook, 
 
 import Color from '../constants/Color'
 import Emoji from '../constants/Emoji'
-import { ArgParser } from '../utils/Args'
+import { ArgParser } from '../model/Arg'
 import { ForbiddenError } from '../utils/Errors'
 
 type Theme = [Color, Emoji]

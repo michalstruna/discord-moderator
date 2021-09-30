@@ -1,7 +1,7 @@
 import Command, { Action } from '../../model/Command'
 import RoleType from '../../constants/RoleType'
 import MessageService from '../../service/MessageService'
-import { Member, Channel, Text, Bool } from '../../utils/Args'
+import { Member, Channel, Text, Bool } from '../../model/Arg'
 
 export default new Command({
     name: 'echo',
