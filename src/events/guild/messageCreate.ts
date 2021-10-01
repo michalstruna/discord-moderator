@@ -16,6 +16,9 @@ export default async (client: Client, msg: Message) => {
     if (command) {
         CommandService.execute(command, ArgParser, meta)
     } else {
+        if (await MessageService.confirm(msg.channel, `Did you mean \`TODO\`?`)) {
+            console.log('yes')
+        }
         // TODO: Did you mean ...?
     }
 }

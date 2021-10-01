@@ -1,11 +1,13 @@
-import { GuildMember, Message, MessageEmbedOptions, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
+import { GuildMember, Interaction, Message, MessageActionRow, MessageButton, MessageEmbedOptions, MessageOptions, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
 
 import Color from '../constants/Color'
+import Config from '../constants/Config'
 import Emoji from '../constants/Emoji'
 import { ArgParser } from '../model/Arg'
 import { ForbiddenError } from '../model/Error'
 
 type Theme = [Color, Emoji]
+type MessageData = string | MessageOptions
 
 module MessageService {
 
@@ -74,6 +76,26 @@ module MessageService {
         const argParser = new ArgParser(text.trim().replace(prefixRegex, ''))
         const commandName = prefixRegex.test(text) ? argParser.shift()! : null
         return [commandName, argParser]
+    }
+
+    export const confirm = async (channel: TextBasedChannels, message: MessageData, userIds?: string[]) => {
+        return new Promise(async resolve => {
+            const msgOptions: MessageOptions = typeof message === 'string' ? { content: message, components: [] } : { ...message, components: message.components || [] }
+
+            msgOptions.components!.push(new MessageActionRow().addComponents([
+                new MessageButton().setCustomId('yes').setLabel('Yes').setStyle('PRIMARY').setEmoji(Emoji.SUCCESS),
+                new MessageButton().setCustomId('no').setLabel('No').setStyle('SECONDARY').setEmoji(Emoji.FAIL)
+            ]))
+
+            const msg = await channel.send(msgOptions)
+            const filter = (interaction: Interaction) => userIds?.includes(interaction.user.id) || false
+            const collector = msg.createMessageComponentCollector({ filter, time: Config.BUTTONS_DURATION, max: 1 }) 
+            
+            collector.on('end', async interactions => {
+                if (msg.deletable) msg.delete()
+                resolve(interactions.first() && interactions.first()?.customId === 'yes')
+            })
+        })
     }
 
 }

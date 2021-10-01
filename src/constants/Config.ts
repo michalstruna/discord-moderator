@@ -1,4 +1,5 @@
 export default {
     DEFAULT_PREFIX: '>',
-    MAX_PREFIX_LENGTH: 10
+    MAX_PREFIX_LENGTH: 10,
+    BUTTONS_DURATION: 120000
 }
