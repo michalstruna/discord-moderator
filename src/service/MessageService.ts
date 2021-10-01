@@ -40,7 +40,7 @@ module MessageService {
             message.embeds![i] = embed
         }
 
-        channel.send(message)
+        return channel.send(message)
     }
 
     // Map webhooks per serber, channel
@@ -91,14 +91,14 @@ module MessageService {
 
     export const confirm = async (channel: TextBasedChannels, description: string, userIds?: string[]) => {
         return new Promise(async resolve => {
-            const msgOptions = { embeds: [{ description }], components: [
+            const msgOptions = { embeds: [{ description, theme: Theme.WARNING }], components: [
                 new MessageActionRow().addComponents([
                     new MessageButton().setCustomId('yes').setLabel('Yes').setStyle('PRIMARY').setEmoji(Emoji.SUCCESS),
                     new MessageButton().setCustomId('no').setLabel('No').setStyle('SECONDARY').setEmoji(Emoji.FAIL)
                 ])
             ] }
             
-            const msg = await channel.send(msgOptions)
+            const msg = await send(channel, msgOptions)
             const filter = (interaction: Interaction) => userIds?.includes(interaction.user.id) || false
             const collector = msg.createMessageComponentCollector({ filter, time: Config.BUTTONS_DURATION, max: 1 }) 
             
