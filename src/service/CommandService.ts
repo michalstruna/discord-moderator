@@ -1,9 +1,10 @@
 import { Guild } from 'discord.js'
 import fs from 'fs'
 import path from 'path'
+import { findBestMatch } from 'string-similarity'
+
 import Color from '../constants/Color'
 import Command from '../model/Command'
-
 import { ActionOptions, ActionMeta, CommandOptions, Part, ServerAction, ServerAuth, ServerCommand, ServerRoles } from '../model/types'
 import { ArgParser, ParsedArgs } from '../model/Arg'
 import { DefaultError } from '../model/Error'
@@ -58,6 +59,11 @@ module CommandService {
 
     export const getByName = (name: string): CommandOptions | undefined => {
         return commands.get(aliases.get(name) || name)
+    }
+
+    export const getBySimilarName = (name: string, threshold: number = 0): CommandOptions | undefined => {
+        const { bestMatch, bestMatchIndex } = findBestMatch(name, Array.from(aliases.keys()))
+        if (bestMatchIndex >= threshold) return commands.get(aliases.get(bestMatch.target)!)
     }
 
     export const getAll = () => {

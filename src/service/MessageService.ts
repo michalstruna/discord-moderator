@@ -1,4 +1,4 @@
-import { GuildMember, Interaction, Message, MessageActionRow, MessageButton, MessageEmbedOptions, MessageOptions, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
+import { GuildMember, Interaction, Message, MessageActionRow, MessageButton, MessageEmbedOptions, MessageOptions as DiscordMessageOptions, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
 
 import Color from '../constants/Color'
 import Config from '../constants/Config'
@@ -7,30 +7,40 @@ import { ArgParser } from '../model/Arg'
 import { ForbiddenError } from '../model/Error'
 
 type Theme = [Color, Emoji]
-type MessageData = string | MessageOptions
+
+type MessageOptions = Omit<DiscordMessageOptions, 'embeds'> & {
+    embeds?: (MessageEmbedOptions & { theme?: Theme })[]
+}
 
 module MessageService {
 
     export const Theme: Record<string, Theme> = {
         SUCCESS: [Color.GREEN, Emoji.SUCCESS],
         FAIL: [Color.RED, Emoji.FAIL],
-        INFO: [Color.BLUE, Emoji.INFO]
+        INFO: [Color.BLUE, Emoji.INFO],
+        WARNING: [Color.GOLD, Emoji.WARNING]
     }
 
     export const react = (msg: Message, emoji: string) => msg.react(emoji)
     export const reactSuccess = (msg: Message) => react(msg, Emoji.SUCCESS)
     export const reactFail = (msg: Message) => react(msg, Emoji.FAIL)
 
-    export const send = (channel: TextBasedChannels, data: MessageEmbedOptions = {}, [color, emoji]: Theme = Theme.INFO) => {
-        const embed = { ...data, color: data.color || color }
+    export const send = (channel: TextBasedChannels, message: MessageOptions = {}) => {
+        for (const i in message.embeds || []) {
+            const { theme, ...embed } = message.embeds![i]
+            if (!theme) continue
+            embed.color = embed.color || theme[0]
 
-        if (embed.title) {
-            embed.title = emoji + ' ' + embed.title
-        } else {
-            embed.description = emoji + ' ' + embed.description
+            if (embed.title) {
+                embed.title = theme[1] + ' ' + embed.title
+            } else {
+                embed.description = theme[1] + ' ' + embed.description
+            }
+
+            message.embeds![i] = embed
         }
 
-        channel.send({ embeds: [embed] })
+        channel.send(message)
     }
 
     // Map webhooks per serber, channel
@@ -67,9 +77,10 @@ module MessageService {
         await webhookClient.send({ content: isPlain ? content : undefined, username: name, avatarURL: avatar, embeds: isPlain ? undefined : [content] })
     }
 
-    export const sendSuccess = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { description, title, color }, Theme.SUCCESS)
-    export const sendFail = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { description, title, color }, Theme.FAIL)
-    export const sendInfo = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { description, title, color })
+    export const sendSuccess = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { embeds: [{ description, title, color, theme: Theme.SUCCESS }] })
+    export const sendFail = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { embeds: [{ description, title, color, theme: Theme.FAIL }] })
+    export const sendInfo = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { embeds: [{ description, title, color, theme: Theme.INFO }] })
+    export const sendWarning = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { embeds: [{ description, title, color, theme: Theme.WARNING }] })
 
     export const parseCommand = (text: string, prefix: string): [string | null, ArgParser] => {
         const prefixRegex = new RegExp(`^${(/^[a-z0-9]/g.test(prefix) ? '' : '\\') + prefix} *`)
@@ -78,15 +89,15 @@ module MessageService {
         return [commandName, argParser]
     }
 
-    export const confirm = async (channel: TextBasedChannels, message: MessageData, userIds?: string[]) => {
+    export const confirm = async (channel: TextBasedChannels, description: string, userIds?: string[]) => {
         return new Promise(async resolve => {
-            const msgOptions: MessageOptions = typeof message === 'string' ? { content: message, components: [] } : { ...message, components: message.components || [] }
-
-            msgOptions.components!.push(new MessageActionRow().addComponents([
-                new MessageButton().setCustomId('yes').setLabel('Yes').setStyle('PRIMARY').setEmoji(Emoji.SUCCESS),
-                new MessageButton().setCustomId('no').setLabel('No').setStyle('SECONDARY').setEmoji(Emoji.FAIL)
-            ]))
-
+            const msgOptions = { embeds: [{ description }], components: [
+                new MessageActionRow().addComponents([
+                    new MessageButton().setCustomId('yes').setLabel('Yes').setStyle('PRIMARY').setEmoji(Emoji.SUCCESS),
+                    new MessageButton().setCustomId('no').setLabel('No').setStyle('SECONDARY').setEmoji(Emoji.FAIL)
+                ])
+            ] }
+            
             const msg = await channel.send(msgOptions)
             const filter = (interaction: Interaction) => userIds?.includes(interaction.user.id) || false
             const collector = msg.createMessageComponentCollector({ filter, time: Config.BUTTONS_DURATION, max: 1 }) 

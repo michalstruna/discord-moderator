@@ -1,7 +1,8 @@
 enum Emoji {
     SUCCESS = '✅',
     FAIL = '❌',
-    INFO = 'ℹ️'
+    INFO = 'ℹ️',
+    WARNING = '⚠️'
 }
 
 export default Emoji
