@@ -88,7 +88,7 @@ module CommandService {
 
     export const execute = async (command: CommandOptions, argParser: ArgParser, meta: ActionMeta) => {
         try {
-            console.log(`command: ${meta.msg.content}`, argParser)
+            console.log(`${new Date().toISOString()}: ${meta.msg.author.tag}: command: ${meta.msg.content}`, argParser)
             const [action, testedArgsSet] = findAction(command.actions, argParser)
             const analyzedArgs = await testedArgsSet.analyze(meta)
             await action.execute(analyzedArgs, meta) // TODO: Check perms.

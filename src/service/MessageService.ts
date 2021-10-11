@@ -21,7 +21,14 @@ module MessageService {
         WARNING: [Color.GOLD, Emoji.WARNING]
     }
 
-    export const react = (msg: Message, emoji: string) => msg.react(emoji)
+    export const react = async (msg: Message, emoji: string) => {
+        try {
+            await msg.react(emoji)
+        } catch (error) {
+            console.error('MessageService.react', error)
+        }
+    }
+
     export const reactSuccess = (msg: Message) => react(msg, Emoji.SUCCESS)
     export const reactFail = (msg: Message) => react(msg, Emoji.FAIL)
 
