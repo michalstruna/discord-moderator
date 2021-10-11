@@ -26,7 +26,7 @@ const getCommandHelp = async (command: CommandOptions, { server, msg }: ActionMe
 
         for (const arg of action.args || []) {
             if (!arg.getDescription()) continue
-            result += `> \`${arg.getName()}\` - ${arg.getDescription()}${arg.getDefault() ? ` *(default \`${arg.getDefault().description || arg.getDefault()}\`)*` : ''}\n`
+            result += `> \`${arg.getName()}\` - ${arg.getDescription()}${arg.getDefault() ? ` *(default \`${arg.getDefault().toString?.() ?? arg.getDefault()}\`)*` : ''}\n`
         }
 
         const renderExample = (example: string[]) => `${server.prefix}${[command.name, ...example].join(' ')}`

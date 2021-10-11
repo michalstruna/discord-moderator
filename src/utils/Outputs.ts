@@ -6,7 +6,7 @@ export const role = (id: string) => `<@&${id}>`
 export const channel = (id: string) => `<#${id}>`
 export const everyone = () => '@everyone'
 
-export const list = (values: string[], lastSeparator = 'or') => [...new Set(values) as any].join(', ').replace(/, ([^,]*)$/, ` ${lastSeparator} $1`)
+export const list = (values: string[], lastSeparator = 'or') => values.join(', ').replace(/, ([^,]*)$/, ` ${lastSeparator} $1`)
 export const codeList = (values: string[], lastSeparator = 'or') => list(values.map(val => `\`${val}\``), lastSeparator)
 
 export const keyValueList = (pairs: [string, string][], bold = false) => pairs.map(([key, value]) => {

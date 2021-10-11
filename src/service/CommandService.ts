@@ -64,7 +64,7 @@ module CommandService {
     }
 
     export const getBySimilarName = (name: string, threshold: number = Config.COMMAND_SIMILARITY_TRESHOLD): CommandOptions | undefined => {
-        const { bestMatch, bestMatchIndex, ratings } = findBestMatch(name, Array.from(aliases.keys()))
+        const { bestMatch, bestMatchIndex } = findBestMatch(name, Array.from(aliases.keys()))
         if (bestMatchIndex >= threshold) return commands.get(aliases.get(bestMatch.target)!)
     }
 
@@ -91,11 +91,9 @@ module CommandService {
             console.log(`${new Date().toISOString()}: ${meta.msg.author.tag}: command: ${meta.msg.content}`, argParser)
             const [action, testedArgsSet] = findAction(command.actions, argParser)
             const analyzedArgs = await testedArgsSet.analyze(meta)
-            await action.execute(analyzedArgs, meta) // TODO: Check perms.
 
-            if (action.react !== false) {
-                MessageService.reactSuccess(meta.msg)
-            }
+            await action.execute(analyzedArgs, meta) // TODO: Check perms.
+            if (action.react !== false) MessageService.reactSuccess(meta.msg)
         } catch (error) {
             console.error(error)
             MessageService.reactFail(meta.msg)

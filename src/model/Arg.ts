@@ -3,9 +3,10 @@ import { ActionMeta, CommandOptions } from './types'
 import { GuildMember, Role as GuildRole, TextBasedChannels } from 'discord.js'
 
 import { InvalidInputError, NotFoundError } from './Error'
-import { codeList } from '../utils/Outputs'
+import { codeList, role } from '../utils/Outputs'
 import CommandService from '../service/CommandService'
 import { multiFind } from '../utils/Collections'
+import Regex from '../utils/Regex'
 
 const formatList = (vals: string[]) => codeList(vals, 'and')
 
@@ -79,7 +80,7 @@ export class ArgParser {
             }
 
             if (tmpRules.length === 0 && tmpArgs.length > 0) { // There are args, but no rules.
-                throw new InvalidInputError(`Unknown argument ${formatList(tmpArgs)}.`)
+                throw new InvalidInputError(`Unknown arguments ${formatList(tmpArgs)}.`)
             }
 
             if (tmpArgs.length === 0 && tmpRules.length > 0) { // There are rules, but no args.
@@ -89,16 +90,24 @@ export class ArgParser {
 
             const rule = tmpRules[0], arg = tmpArgs[0]
             const isList = rule instanceof List
+            const isMulti = rule instanceof Text && rule.isMulti()
 
             if ((rule.isRequired() || reqRules.length < tmpArgs.length) && rule.test(arg)) { // Consume rule and arg.
-                parsed[rule.getName()] = isList ? [...(parsed[rule.getName()] as string[] || []), arg] : arg
+                parsed[rule.getName()] = isList ? [...(parsed[rule.getName()] as string[] || []), arg] : (isMulti ? parsed[rule.getName()] + ' ' + arg : arg)
 
-                if (!isList || reqRules.length > tmpArgs.length - 1) {
+                if ((!isList && !isMulti) || reqRules.length > tmpArgs.length - 1) {
                     tmpRules.shift()
                     if (rule.isRequired()) reqRules.shift()
                 }
 
                 tmpArgs.shift()
+                continue
+            }
+
+            if (rule.getDefault()) {
+                parsed[rule.getName()] = null as any
+                tmpRules.shift()
+                if (rule.isRequired()) reqRules.shift()
                 continue
             }
 
@@ -222,7 +231,7 @@ export class Cmd<Name extends string> extends Arg<Name, CommandOptions> {
 
 export class Member<Name extends string> extends Arg<Name, GuildMember> {
 
-    public static CURRENT = {}
+    public static CURRENT = { toString: () => 'author' }
 
     public async parse(value: string, { msg }: ActionMeta) {
         const member = multiFind(msg.guild!.members.cache, value, m => ([m.displayName, m.user.tag]))
@@ -235,7 +244,11 @@ export class Member<Name extends string> extends Arg<Name, GuildMember> {
 
 export class Role<Name extends string> extends Arg<Name, GuildRole> {
 
-    public static EVERYONE = {}
+    public static EVERYONE = { toString: () => 'everyone' }
+
+    public test(value: string) {
+        return Regex.CHANNEL.test(value)
+    }
 
     public async parse(value: string, { msg }: ActionMeta) {
         const role = multiFind(msg.guild!.roles.cache, value, r => ([r.name]))
@@ -248,10 +261,10 @@ export class Role<Name extends string> extends Arg<Name, GuildRole> {
 
 export class Channel<Name extends string> extends Arg<Name, TextBasedChannels> {
 
-    public static CURRENT = {}
+    public static CURRENT = { toString: () => 'current' }
 
     public async parse(input: string, { msg }: ActionMeta) {
-        const channel = msg.guild?.channels.cache.get(input) as TextBasedChannels
+        const channel = msg.guild?.channels.cache.get(input?.replace(/[^0-9]/g, '')) as TextBasedChannels
         if (channel) return channel
         if (this.defaultValue === Channel.CURRENT) return msg.channel
         throw new NotFoundError(`Channel \`${input}\` was not found.`)
@@ -302,7 +315,7 @@ export class List<Name extends string, Type extends Arg<any, any>> extends Arg<N
     }
 
     public toString() {
-        return super.toString().replace('>]', '...>]')
+        return super.toString().replace(/(>\]?)/, '...$1')
     }
 
     public test(value: string) {
