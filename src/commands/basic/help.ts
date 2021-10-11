@@ -1,20 +1,22 @@
-const Emoji = require('../../constants/Emoji')
-const CommandService = require('../../service/CommandService')
-const MessageService = require('../../service/MessageService')
-const { Command } = require('../../utils/Args')
-const { actionPerms } = require('../../utils/Outputs')
+import { ActionOptions, ActionMeta, CommandOptions, ServerData } from "../../model/types"
+import Emoji from '../../constants/Emoji'
+import CommandService from '../../service/CommandService'
+import MessageService from '../../service/MessageService'
+import { actionPerms } from '../../utils/Outputs'
+import { Cmd } from "../../model/Arg"
+import Command, { Action } from "../../model/Command"
 
-const getHelp = async (commands, { server }) => {
+const getHelp = async (commands: CommandOptions[], { server }: ActionMeta) => {
     return commands.map(command => `**${command.name}:** ${command.description} ${Emoji.SUCCESS}\n${command.actions.map(a => `> **${a.name}:** ${getActionPattern(server, command, a)} - ${a.description}`).join('\n')}`).join('\n\n')
 }
 
-const getActionPattern = (server, command, action) => {
+const getActionPattern = (server: ServerData, command: CommandOptions, action: ActionOptions) => {
     return `\`${[server.prefix + command.name, ...(action.args || []).map(arg => arg.toString())].join(' ')}\``
 }
 
-const getCommandHelp = async (command, { server, msg }) => {
+const getCommandHelp = async (command: CommandOptions, { server, msg }: ActionMeta) => {
     let result = `**Description:** ${command.description || ''} ${Emoji.SUCCESS}`
-    const serverCommand = server.commands.get(command.name)
+    const serverCommand = server.commands[command.name]
 
     if (command.aliases) result += `\n**Aliases:** \`${command.aliases.map(a => `${server.prefix}${a}`).join('`, `')}\``
     result += `\n**Group:** Administration\n\n`
@@ -23,14 +25,11 @@ const getCommandHelp = async (command, { server, msg }) => {
         result += `**${action.name}:** ${action.description}\nUsage: ${getActionPattern(server, command, action)}\n`
 
         for (const arg of action.args || []) {
-            if (!arg.description) {
-                continue
-            }
-
-            result += `> \`${arg.name}\` - ${arg.description}${arg.defaultValue ? ` *(default \`${arg.defaultValue.description || args.defaultValue}\`)*` : ''}\n`
+            if (!arg.getDescription()) continue
+            result += `> \`${arg.getName()}\` - ${arg.getDescription()}${arg.getDefault() ? ` *(default \`${arg.getDefault().description || arg.getDefault()}\`)*` : ''}\n`
         }
 
-        const renderExample = example => `${server.prefix}${[command.name, ...example].join(' ')}`
+        const renderExample = (example: string[]) => `${server.prefix}${[command.name, ...example].join(' ')}`
 
         if (action.examples?.length) {
             if (action.examples.length === 1) {
@@ -44,22 +43,22 @@ const getCommandHelp = async (command, { server, msg }) => {
             }
         }
 
-        result += `Can use: ${actionPerms(serverCommand.actions.get(action.name), msg.guild.roles.everyone.id)}\n`
+        result += `Can use: ${actionPerms(serverCommand.actions[action.name], msg.guild!.roles.everyone.id)}\n`
         result += `Limit usage: 1x / 5 s / user\n\n`
     }
 
     return result
 }
 
-module.exports = {
+export default new Command({
     name: 'help',
     description: 'Show help.',
     aliases: ['?', 'man', 'doc', 'docs', 'cmd', 'command', 'commands'],
     actions: [
-        {
+        Action({
             name: 'get',
             args: [
-                Command('command', 'Name of command.')
+                new Cmd('command', 'Name of command.')
             ],
             execute: async ({ command }, meta) => {
                 if (command) {    
@@ -71,6 +70,6 @@ module.exports = {
             },
             description: 'Show general help or command help.',
             examples: [[], ['prefix']]
-        }
+        })
     ]
-}
+})
