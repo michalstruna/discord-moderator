@@ -1,15 +1,9 @@
 import { Client, Message } from 'discord.js'
-import { ArgParser } from '../../model/Arg'
 
-import { ActionMeta, CommandOptions } from '../../model/types'
+import { ActionMeta } from '../../model/types'
 import CommandService from '../../service/CommandService'
 import MessageService from '../../service/MessageService'
 import ServerService from '../../service/ServerService'
-
-type CommandMemory = {
-    command: CommandOptions
-    argParser: ArgParser
-}
 
 const handleCommand = async (meta: ActionMeta) => {
     if (!meta.msg.content.startsWith(meta.server.prefix)) return // Ignore non-command messages.
@@ -17,13 +11,14 @@ const handleCommand = async (meta: ActionMeta) => {
     const command = CommandService.getByName(commandName!)
 
     if (command) {
-        CommandService.execute(command, argParser, meta)
+        CommandService.execute(command, argParser!, meta)
     } else {
-        console.log(111, commandName)
         const command = CommandService.getBySimilarName(commandName!)
 
         if (command && await MessageService.confirm(meta.msg.channel, `Did you mean \`${command.name}\`?`, [meta.msg.author.id])) {
-            CommandService.execute(command, argParser, meta)
+            CommandService.execute(command, argParser!, meta)
+        } else {
+            await MessageService.sendFail(meta.msg.channel, `Command \`${commandName}\` was not found.`)
         }
     }
 }

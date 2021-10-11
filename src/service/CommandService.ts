@@ -9,6 +9,7 @@ import { ActionOptions, ActionMeta, CommandOptions, Part, ServerAction, ServerAu
 import { ArgParser, ParsedArgs } from '../model/Arg'
 import { DefaultError } from '../model/Error'
 import MessageService from './MessageService'
+import Config from '../constants/Config'
 
 const commands = new Map<string, CommandOptions>()
 const aliases = new Map<string, string>()
@@ -28,6 +29,7 @@ module CommandService {
                 const command: Command = require(`../commands/${category}/${file}`).default
                 command.setCategory(category)
                 commands.set(command.getName(), command.getOptions())
+                aliases.set(command.getName(), command.getName())
 
                 for (const alias of command.getAliases() || []) {
                     aliases.set(alias, command.getName())
@@ -61,8 +63,8 @@ module CommandService {
         return commands.get(aliases.get(name) || name)
     }
 
-    export const getBySimilarName = (name: string, threshold: number = 0): CommandOptions | undefined => {
-        const { bestMatch, bestMatchIndex } = findBestMatch(name, Array.from(aliases.keys()))
+    export const getBySimilarName = (name: string, threshold: number = Config.COMMAND_SIMILARITY_TRESHOLD): CommandOptions | undefined => {
+        const { bestMatch, bestMatchIndex, ratings } = findBestMatch(name, Array.from(aliases.keys()))
         if (bestMatchIndex >= threshold) return commands.get(aliases.get(bestMatch.target)!)
     }
 

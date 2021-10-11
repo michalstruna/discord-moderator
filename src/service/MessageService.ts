@@ -43,7 +43,7 @@ module MessageService {
         return channel.send(message)
     }
 
-    // Map webhooks per serber, channel
+    // Map webhooks per server and channel.
     type Webhooks = Record<string, [Webhook, WebhookClient]>
     type Channels = Record<string, Webhooks>
     type Server = Record<string, Channels>
@@ -82,10 +82,14 @@ module MessageService {
     export const sendInfo = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { embeds: [{ description, title, color, theme: Theme.INFO }] })
     export const sendWarning = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { embeds: [{ description, title, color, theme: Theme.WARNING }] })
 
-    export const parseCommand = (text: string, prefix: string): [string | null, ArgParser] => {
-        const prefixRegex = new RegExp(`^${(/^[a-z0-9]/g.test(prefix) ? '' : '\\') + prefix} *`)
-        const argParser = new ArgParser(text.trim().replace(prefixRegex, ''))
-        const commandName = prefixRegex.test(text) ? argParser.shift()! : null
+    export const parseCommand = (text: string, prefix: string): [string | null, ArgParser | null] => {
+        let input = text.trim()
+        if (!input.startsWith(prefix)) return [null, null]
+        input = input.replace(prefix, '').trim()
+        const parts = input.split(/[ \n]+/)
+        const commandName = parts.shift()!
+        input = input.replace(commandName, '').trim()
+        const argParser = new ArgParser(input)
         return [commandName, argParser]
     }
 
