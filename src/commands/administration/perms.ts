@@ -67,7 +67,7 @@ export default new Command({
                     )), true), `Perms • ${command.name}`)
                 } else {
                     const roles = keyValueList([
-                        ['Admin', RoleType.ADMIN], ['Mod', RoleType.MOD],['Member', RoleType.MEMBER]
+                        ['Admin', RoleType.ADMIN], ['Mod', RoleType.MOD], ['Member', RoleType.MEMBER]
                     ].map(([name, value]) => {
                         const r = server.roles[value as RoleType]
                         return ([name, r === msg.guild!.roles.everyone.id ? everyone() : role(r)])
