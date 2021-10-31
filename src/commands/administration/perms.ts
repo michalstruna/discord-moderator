@@ -46,7 +46,7 @@ export default new Command({
                 new Bool('reset').req(),
                 new Cmd('command')
             ],
-            auth: {permit: [RoleType.ADMIN] },
+            auth: { permit: [RoleType.ADMIN] },
             execute: async (args, meta) => {
 
             },
