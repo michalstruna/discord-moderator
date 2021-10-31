@@ -93,7 +93,7 @@ export class ArgParser {
             const isMulti = rule instanceof Text && rule.isMulti()
 
             if ((rule.isRequired() || reqRules.length < tmpArgs.length) && rule.test(arg)) { // Consume rule and arg.
-                parsed[rule.getName()] = isList ? [...(parsed[rule.getName()] as string[] || []), arg] : (isMulti ? parsed[rule.getName()] + ' ' + arg : arg)
+                parsed[rule.getName()] = isList ? [...(parsed[rule.getName()] as string[] || []), arg] : (isMulti ? (parsed[rule.getName()] || '') + ' ' + arg : arg)
 
                 if ((!isList && !isMulti) || reqRules.length > tmpArgs.length - 1) {
                     tmpRules.shift()
@@ -246,10 +246,6 @@ export class Role<Name extends string> extends Arg<Name, GuildRole> {
 
     public static EVERYONE = { toString: () => 'everyone' }
 
-    public test(value: string) {
-        return Regex.CHANNEL.test(value)
-    }
-
     public async parse(value: string, { msg }: ActionMeta) {
         const role = multiFind(msg.guild!.roles.cache, value, r => ([r.name]))
         if (role) return role
@@ -262,6 +258,10 @@ export class Role<Name extends string> extends Arg<Name, GuildRole> {
 export class Channel<Name extends string> extends Arg<Name, TextBasedChannels> {
 
     public static CURRENT = { toString: () => 'current' }
+
+    public test(value: string) {
+        return Regex.CHANNEL.test(value)
+    }
 
     public async parse(input: string, { msg }: ActionMeta) {
         const channel = msg.guild?.channels.cache.get(input?.replace(/[^0-9]/g, '')) as TextBasedChannels
