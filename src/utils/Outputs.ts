@@ -1,4 +1,5 @@
 import { ServerAction } from '../model/types'
+import { unique } from './Collections'
 import { getActionPerms } from './Perms'
 
 export const member = (id: string) => `<@${id}>`
@@ -16,8 +17,8 @@ export const keyValueList = (pairs: [string, string][], bold = false) => pairs.m
 
 export const actionPerms = (serverAction: ServerAction, everyoneId: string) => { // TODO: Move to action.
     const { allow, forbid } = getActionPerms(serverAction)
-    const allowRoles = list(allow.length > 0 ? allow.map((r: string) => r === everyoneId ? everyone() : role(r)) : [everyone()], 'and')
-    const forbidRoles = list(forbid.map((r: string) => r === everyoneId ? everyone() : role(r)), 'and')
+    const allowRoles = list(allow.length > 0 ? unique(allow).map((r: string) => r === everyoneId ? everyone() : role(r)) : [everyone()], 'and')
+    const forbidRoles = list(unique(forbid).map((r: string) => r === everyoneId ? everyone() : role(r)), 'and')
 
     return [allowRoles, ...(forbid.length > 0 ? ['except', forbidRoles] : [])].join(' ')
 }

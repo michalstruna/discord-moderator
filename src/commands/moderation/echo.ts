@@ -1,7 +1,7 @@
 import Command, { Action } from '../../model/Command'
 import RoleType from '../../constants/RoleType'
 import MessageService from '../../service/MessageService'
-import { Member, Channel, Text, Bool } from '../../model/Arg'
+import { Member, Channel, Text, Switch } from '../../model/Arg'
 
 export default new Command({
     name: 'echo',
@@ -23,7 +23,7 @@ export default new Command({
         Action({
             name: 'as-user',
             args: [
-                new Channel('channel', 'If not provided, send to current channel.' ).default(Channel.CURRENT),
+                new Channel('channel').default(Channel.CURRENT),
                 new Member('as', 'Send message with identity of the user.').default(Member.CURRENT).explicit().req(),
                 new Text('message', 'Text you want to send.').req().multi()
             ],
@@ -37,8 +37,8 @@ export default new Command({
         Action({
             name: 'as-server',
             args: [
-                new Channel('channel', 'If not provided, send to current channel.' ).default(Channel.CURRENT),
-                new Bool('server', 'Send message with identity of the server.').req(),
+                new Channel('channel').default(Channel.CURRENT),
+                new Switch('server').req(),
                 new Text('message', 'Text you want to send.').req().multi()
             ],
             auth: { permit: [RoleType.ADMIN, RoleType.MOD] },

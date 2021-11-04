@@ -15,3 +15,7 @@ export const multiFind = <Item>(collection: Collection<string, Item>, value: str
         if (result) return result
     }
 }
+
+export const unique = <Item>(array: Item[]) => {
+    return Array.from(new Set(array).values())
+}
