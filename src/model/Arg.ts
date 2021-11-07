@@ -1,9 +1,9 @@
-import argv, { Arguments } from 'yargs-parser'
+import argv from 'yargs-parser'
 import { ActionMeta, CommandOptions } from './types'
-import { GuildMember, Role as GuildRole, TextBasedChannels } from 'discord.js'
+import { ColorResolvable, GuildMember, Role as GuildRole, TextBasedChannels } from 'discord.js'
 
 import { InvalidInputError, NotFoundError } from './Error'
-import { codeList, role } from '../utils/Outputs'
+import { codeList } from '../utils/Outputs'
 import CommandService from '../service/CommandService'
 import { multiFind } from '../utils/Collections'
 import Regex from '../utils/Regex'
@@ -28,7 +28,7 @@ export class ParsedArgs {
         for (const rule of this.rules) {
             const arg = this.args[rule.getName()]
 
-            if (arg !== undefined) {
+            if (arg !== undefined || rule.getDefault()) {
                 analyzed[rule.getName()] = await rule.parse(arg, meta)
             }
         }
@@ -40,29 +40,33 @@ export class ParsedArgs {
 
 export class ArgParser {
 
-    private args: Arguments
+    private input: string
 
     constructor(input: string) {
-        this.args = argv(input)
-    }
-
-    public shift() {
-        return this.args._.shift()
+        this.input = input
     }
 
     public parse(rules: readonly Arg<any, any>[] = []) {
+        const args = argv(this.input, {
+            boolean: rules.filter(r => r instanceof Bool).map(r => r.getName()),
+            string: rules.filter(r => r instanceof Text).map(r => r.getName()),
+            configuration: {
+                'camel-case-expansion': false
+            }
+        })
+
         const parsed: ParsedArgsMap = {}
         let tmpRules = [...rules]
         let reqRules = [...rules.filter(r => r.isRequired())]
-        let tmpArgs = [...this.args._]
+        let tmpArgs = [...args._]
 
-        for (const key in this.args) {
+        for (const key in args) {
             if (key === '_') continue // Ignore positional args.
             const rule = tmpRules.find(r => r.getName() === key)
             const isList = rule instanceof List
             if (!rule) throw new InvalidInputError(`Unexpected argument \`${key}\`.`)
-            if (!rule.test(this.args[key])) throw new InvalidInputError(`Invalid argument \`${key}\`.`)
-            parsed[key] = isList ? [this.args[key]] : this.args[key]
+            if (!rule.test(args[key])) throw new InvalidInputError(`Invalid argument \`${key}\`.`)
+            parsed[key] = isList ? [args[key]] : args[key]
 
             if (!isList || reqRules.length > tmpArgs.length) {
                 tmpRules = tmpRules.filter(r => r.getName() !== key)
@@ -214,6 +218,8 @@ export class Text<Name extends string> extends Arg<Name, string> {
     }
 
 }
+
+export class Color<Name extends string> extends Arg<Name, ColorResolvable> {}
 
 export class Cmd<Name extends string> extends Arg<Name, CommandOptions> {
 
