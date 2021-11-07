@@ -62,7 +62,7 @@ export default new Command({
                 new Text('thumbnail-url').explicit(),
                 new Text('image-url').explicit(),
                 new Text('timestamp').explicit(),
-                new Text('footer-text').explicit(),
+                new Text('footer-text').explicit().multi(),
                 new Text('footer-icon_url').explicit(),
                 new Channel('channel').default(Channel.CURRENT),
                 new Text('description', 'Text you want to send.').req().multi()

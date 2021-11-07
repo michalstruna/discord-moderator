@@ -47,9 +47,23 @@ export class ArgParser {
     }
 
     public parse(rules: readonly Arg<any, any>[] = []) {
-        const args = argv(this.input, {
-            boolean: rules.filter(r => r instanceof Bool).map(r => r.getName()),
-            string: rules.filter(r => r instanceof Text).map(r => r.getName()),
+        const narg: Record<string, number> = {}
+        const coerce: Record<string, (value: any) => any> = {}
+        const boolean: string[] = []
+        const string: string [] = []
+
+        for (const rule of rules) {
+            if (rule instanceof Text) string.push(rule.getName())
+            if (rule instanceof Bool) boolean.push(rule.getName())
+
+            if (Arg.isMulti(rule)) {
+                narg[rule.getName()] = 10e10
+                if (rule instanceof Text) coerce[rule.getName()] = (value: any[]) => value.join(' ')
+            }
+        }
+
+        const args = argv(this.input, { 
+            boolean, string, narg, coerce,
             configuration: {
                 'camel-case-expansion': false
             }
@@ -136,6 +150,12 @@ export abstract class Arg<Name extends string, Result> {
     protected defaultValue?: any
     protected maximum?: number
     protected minimum?: number
+
+    public static isMulti(arg: Arg<any, any>): boolean {
+        if (arg instanceof Text && arg.isMulti()) return true
+        if (arg instanceof Array) return true
+        return false
+    }
 
     constructor(name?: Name, description?: string) {
         this.name = name
