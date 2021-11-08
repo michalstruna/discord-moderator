@@ -35,7 +35,7 @@ export default new Command({
             auth: {permit: [RoleType.ADMIN] },
             execute: async ({ admin, mod, member }, { msg }) => {
                 await ServerService.setRoles(msg.guild!, { [RoleType.ADMIN]: admin.id, [RoleType.MOD]: mod.id, [RoleType.MEMBER]: member.id })
-                MessageService.sendSuccess(msg.channel, `Admin (${admin}), mod (${mod}) and member (${member}) roles were set.`)
+                MessageService.sendSuccess(msg.channel, `Admin (${admin.toString()}), mod (${mod.toString()}) and member (${member.toString()}) roles were set.`)
             },
             description: 'Set default perm roles.',
             examples: [['-default', '@Admin', '@Moderator']]

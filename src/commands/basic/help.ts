@@ -5,9 +5,10 @@ import MessageService from '../../service/MessageService'
 import { actionPerms } from '../../utils/Outputs'
 import { Cmd } from "../../model/Arg"
 import Command, { Action } from "../../model/Command"
+import { truncate } from '../../utils/Strings'
 
 const getHelp = async (commands: CommandOptions[], { server }: ActionMeta) => {
-    return commands.map(command => `**${command.name}:** ${command.description} ${Emoji.SUCCESS}\n${command.actions.map(a => `> **${a.name}:** ${getActionPattern(server, command, a)} - ${a.description}`).join('\n')}`).join('\n\n')
+    return commands.map(command => `**${command.name}:** ${command.description} ${Emoji.SUCCESS}\n${command.actions.map(a => `> **${a.name}:** ${truncate(getActionPattern(server, command, a), 100, '...`')} - ${a.description}`).join('\n')}`).join('\n\n')
 }
 
 const getActionPattern = (server: ServerData, command: CommandOptions, action: ActionOptions) => {
