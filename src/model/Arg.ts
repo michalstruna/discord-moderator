@@ -58,7 +58,7 @@ export class ArgParser {
 
             if (Arg.isMulti(rule)) {
                 narg[rule.getName()] = 10e10
-                if (rule instanceof Text) coerce[rule.getName()] = (value: any[]) => value.join(' ')
+                if (rule instanceof Text) coerce[rule.getName()] = value => value.join(' ')
             }
         }
 
