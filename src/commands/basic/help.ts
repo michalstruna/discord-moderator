@@ -3,9 +3,11 @@ import Emoji from '../../constants/Emoji'
 import CommandService from '../../service/CommandService'
 import MessageService from '../../service/MessageService'
 import { actionPerms } from '../../utils/Outputs'
-import { Cmd } from "../../model/Arg"
+import { Text } from "../../model/Arg"
 import Command, { Action } from "../../model/Command"
 import { truncate } from '../../utils/Strings'
+import CommandCategory from '../../constants/CommandCategory'
+import { InvalidInputError } from '../../model/Error'
 
 const getHelp = async (commands: CommandOptions[], { server }: ActionMeta) => {
     return commands.map(command => `**${command.name}:** ${command.description} ${Emoji.SUCCESS}\n${command.actions.map(a => `> **${a.name}:** ${truncate(getActionPattern(server, command, a), 100, '...`')} - ${a.description}`).join('\n')}`).join('\n\n')
@@ -51,23 +53,65 @@ const getCommandHelp = async (command: CommandOptions, { server, msg }: ActionMe
     return result
 }
 
+enum Level {
+    COMMAND,
+    CATEGORY
+}
+
+const COMMAND_PAGE_SIZE = 1
+
 export default new Command({
     name: 'help',
+    category: CommandCategory.BASIC,
     description: 'Show help.',
     aliases: ['?', 'man', 'doc', 'docs', 'cmd', 'command', 'commands'],
     actions: [
         Action({
             name: 'get',
             args: [
-                new Cmd('command', 'Name of command.')
+                new Text('item', 'Name of command or category.')
             ],
-            execute: async ({ command }, meta) => {
-                if (command) {    
-                    MessageService.sendInfo(meta.msg.channel, await getCommandHelp(command, meta), `Help • ${command.name}`)
-                } else {
-                    const commands = CommandService.getAll()
-                    MessageService.sendInfo(meta.msg.channel, await getHelp(commands, meta), `Help • Administration`)
-                }
+            execute: async ({ item }, meta) => {
+                const isCommand = !!CommandService.getByName(item)
+                const isCategory = CommandService.getAllCategories().map(c => c.toLowerCase()).includes(item)
+                if (item && !isCommand && !isCategory) throw new InvalidInputError(`Unrecognized command or category \`${item}\`.`)
+
+                MessageService.pages(meta.msg.channel, async ({ level, item }) => {
+                    switch (level) {
+                        case Level.COMMAND:
+                            const command = CommandService.getByName(item)!
+
+                            return {
+                                title: `Help • ${item}`,
+                                description: await getCommandHelp(command, meta),
+                                theme: MessageService.Theme.INFO,
+                                buttons: [
+                                    { label: 'Back to ' + command.category, target: { level: Level.CATEGORY, item: command.category } }
+                                ]
+                            }
+                        default:
+                            const categories = CommandService.getAllCategories()
+                            const commands = CommandService.getAllByCategory(item as CommandCategory)
+    
+                            return {
+                                title: `Help • ${item}`,
+                                description: await getHelp(commands, meta),
+                                theme: MessageService.Theme.INFO,
+                                buttons: categories.map(c => ({ label: c, target: { level: Level.CATEGORY, item: c } })),
+                                selects: [{
+                                    placeholder: 'Select command',
+                                    options: commands.map(c => ({
+                                        label: c.name,
+                                        description: c.description,
+                                        target: { level: Level.COMMAND, item: c.name }
+                                    }))
+                                }]
+                            }
+                    }
+                }, {
+                    defaultPage: isCommand ? { level: Level.COMMAND, item } : { level: Level.CATEGORY, item: item || CommandCategory.BASIC },
+                    users: [meta.msg.author.id]
+                })
             },
             description: 'Show general help or command help.',
             examples: [[], ['prefix']]

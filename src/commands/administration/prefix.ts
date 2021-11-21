@@ -4,9 +4,11 @@ import Config from '../../constants/Config'
 import { Text, Switch } from '../../model/Arg'
 import MessageService from '../../service/MessageService'
 import ServerService from '../../service/ServerService'
+import CommandCategory from '../../constants/CommandCategory'
 
 export default new Command({
     name: 'prefix',
+    category: CommandCategory.ADMINISTRATION,
     description: 'Manage prefix for server.',
     aliases: ['pref'],
     actions: [

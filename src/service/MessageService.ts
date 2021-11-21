@@ -1,17 +1,13 @@
-import { GuildMember, Interaction, Message, MessageActionRow, MessageButton, MessageEmbedOptions, MessageOptions as DiscordMessageOptions, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
+import { GuildMember, Interaction, Message, MessageActionRow, MessageButton, MessageEmbedOptions, MessageSelectMenu, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
+import Equal from 'deep-equal'
 
 import Color from '../constants/Color'
 import Config from '../constants/Config'
 import Emoji from '../constants/Emoji'
 import { ArgParser } from '../model/Arg'
 import { ForbiddenError } from '../model/Error'
-
-type Theme = [Color, Emoji]
-
-type MessageOptions = Omit<DiscordMessageOptions, 'embeds'> & {
-    embeds?: (MessageEmbedOptions & { theme?: Theme })[]
-}
-
+import { MessageOptions, PageButton, PageRenderer, PageSelect, PagesOptions, Theme } from './type'
+import { truncate } from '../utils/Strings'
 module MessageService {
 
     export const Theme: Record<string, Theme> = {
@@ -32,7 +28,7 @@ module MessageService {
     export const reactSuccess = (msg: Message) => react(msg, Emoji.SUCCESS)
     export const reactFail = (msg: Message) => react(msg, Emoji.FAIL)
 
-    export const send = (channel: TextBasedChannels, message: MessageOptions = {}) => {
+    export const send = (channel: TextBasedChannels, message: MessageOptions = {}, editedMessage?: Message) => {
         for (const i in message.embeds || []) {
             const { theme, ...embed } = message.embeds![i]
             if (!theme) continue
@@ -47,7 +43,7 @@ module MessageService {
             message.embeds![i] = embed
         }
 
-        return channel.send(message)
+        return editedMessage ? editedMessage.edit(message) : channel.send(message)
     }
 
     // Map webhooks per server and channel.
@@ -120,6 +116,103 @@ module MessageService {
         })
     }
 
+    export const pages = async <Target>(channel: TextBasedChannels, render: PageRenderer<Target>, options: PagesOptions<Target>) => {
+        new PageManager<Target>(channel, render, options)
+    }
+
 }
 
 export default MessageService
+
+
+class PageManager<Target> {
+
+    private channel: TextBasedChannels
+    private renderer: PageRenderer<Target>
+    private page: Target
+    private options: PagesOptions<Target>
+
+    public constructor(channel: TextBasedChannels, renderer: PageRenderer<Target>, options: PagesOptions<Target>) {
+        this.channel = channel
+        this.renderer = renderer
+        this.page = options.defaultPage
+        this.options = options
+        this.render()
+    }
+
+    private createButtons(pageButtons: PageButton<Target>[]) {
+        const buttons = pageButtons.map(b => (
+            new MessageButton()
+                .setLabel(b.label)
+                .setStyle('PRIMARY')
+                .setCustomId(JSON.stringify(b.target)) // TODO: If target exists.
+                .setDisabled(Equal(b.target, this.page))
+        ))
+
+        const rows = []
+
+        if (buttons) {
+            for (let i = 0; i < buttons.length; i += 5) {
+                rows.push(new MessageActionRow().addComponents(...buttons.slice(i, i + 5)))
+            }
+        }
+
+        return rows
+    }
+
+    private createSelects(pageSelects: PageSelect<Target>[]) {
+        return pageSelects.map((s, i) => (
+            new MessageActionRow().addComponents(
+                new MessageSelectMenu()
+                .setCustomId(`select_${i}`)
+                .setPlaceholder(s.placeholder || '')
+                .addOptions(
+                    s.options.map((item, i) => ({
+                        label: item.label,
+                        description: truncate(item.description || '', Config.SELECT_DESCRIPTION_MAX_LENGTH),
+                        value: JSON.stringify(item.target) // TODO: If target exists.
+                    }))
+                )
+            )
+        ))
+    }
+
+    private async createCollector(message: Message) {
+        const filter = (i: Interaction) => this.options.users ? this.options.users.includes(i.user.id) : true
+        const collector = message.createMessageComponentCollector({ filter, time: Config.BUTTONS_DURATION }) 
+
+        collector.on('collect', async i => {
+            if (i.isButton()) {
+                this.page = JSON.parse(i.customId)
+            } else if (i.isSelectMenu()) {
+                this.page = JSON.parse(i.values[0])
+            }
+
+            this.render(message)
+            i.deferUpdate()
+        })
+        
+        collector.on('end', async () => {
+            try {
+                await message.edit({ components: [] })
+            } catch (e) {
+                console.error(e)
+            }
+        })
+    }
+
+    private async render(editedMessage?: Message) {
+        const content = await this.renderer(this.page)
+        const buttonRows = this.createButtons(content.buttons || [])
+        const selectRows = this.createSelects(content.selects || [])
+
+        const messageContent = {
+            embeds: [content],
+            components: [...buttonRows, ...selectRows]
+        }
+
+        const message = await MessageService.send(this.channel, messageContent, editedMessage)
+        if (!editedMessage) this.createCollector(message)
+    }
+
+}

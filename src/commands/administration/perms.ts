@@ -4,9 +4,11 @@ import ServerService from '../../service/ServerService'
 import { Text, List, Role, Bool, Cmd } from '../../model/Arg'
 import { role, keyValueList, actionPerms, everyone } from '../../utils/Outputs'
 import Command, { Action } from '../../model/Command'
+import CommandCategory from '../../constants/CommandCategory'
  
 export default new Command({
     name: 'perms',
+    category: CommandCategory.ADMINISTRATION,
     description: 'Manage command permissions.',
     actions: [
         Action({

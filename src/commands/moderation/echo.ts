@@ -4,6 +4,7 @@ import Command, { Action } from '../../model/Command'
 import RoleType from '../../constants/RoleType'
 import MessageService from '../../service/MessageService'
 import { Member, Channel, Text, Bool, Color } from '../../model/Arg'
+import CommandCategory from '../../constants/CommandCategory'
 
 type ArgsEmbed = {
     title: string
@@ -47,6 +48,7 @@ const buildEmbed = (src: ArgsEmbed): MessageEmbedOptions | string => {
 
 export default new Command({
     name: 'echo',
+    category: CommandCategory.MODERATION,
     description: 'Manage sending of messages.',
     actions: [
         Action({

@@ -1,4 +1,5 @@
 import { Client, Message } from 'discord.js'
+import CommandCategory from '../constants/CommandCategory'
 
 import RoleType from '../constants/RoleType'
 import { Arg } from './Arg'
@@ -58,6 +59,7 @@ export type ActionOptions<A extends readonly Arg<any, any>[] = any> = {
 
 export type CommandOptions = {
     name: string
+    category: CommandCategory
     aliases?: string[]
     description?: string
     actions: ActionOptions<any>[]

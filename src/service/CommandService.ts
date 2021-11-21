@@ -10,6 +10,7 @@ import { ArgParser, ParsedArgs } from '../model/Arg'
 import { DefaultError } from '../model/Error'
 import MessageService from './MessageService'
 import Config from '../constants/Config'
+import CommandCategory from '../constants/CommandCategory'
 
 const commands = new Map<string, CommandOptions>()
 const aliases = new Map<string, string>()
@@ -105,6 +106,14 @@ module CommandService {
                 MessageService.sendFail(meta.msg.channel, error.message, undefined, Color.RED)
             }
         }
+    }
+
+    export const getAllByCategory = (category: CommandCategory) => {
+        return getAll().filter(c => c.category === category)
+    }
+
+    export const getAllCategories = () => {
+        return Object.values(CommandCategory)
     }
 
 }
