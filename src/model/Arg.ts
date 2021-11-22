@@ -228,8 +228,8 @@ export class Text<Name extends string> extends Arg<Name, string> {
 
     protected _multi: boolean = false
 
-    public async parse(value: string) {
-        return value.toString()
+    public async parse(value: string, meta: ActionMeta) {
+        return (await super.parse(value, meta)).toString()
     }
 
     public multi(isMulti = true) {
@@ -304,8 +304,8 @@ export class Channel<Name extends string> extends Arg<Name, TextBasedChannels> {
 
 export class Real<Name extends string> extends Arg<Name, number> {
 
-    public async parse(input: string) {
-        const val = parseFloat(input)
+    public async parse(input: string, meta: ActionMeta) {
+        const val = parseFloat(await super.parse(input, meta) as any)
 
         if (this.minimum !== undefined && this.minimum > val) throw new InvalidInputError(`\`${this.getName()}\` must be \`${this.minimum}\` or greater.`)
         if (this.maximum !== undefined && val > this.maximum) throw new InvalidInputError(`\`${this.getName()}\` must be \`${this.maximum}\` or lower.`)
@@ -317,8 +317,8 @@ export class Real<Name extends string> extends Arg<Name, number> {
 
 export class Int<Name extends string> extends Real<Name> {
 
-    public async parse(input: string) {
-        return Math.floor(await super.parse(input))
+    public async parse(input: string, meta: ActionMeta) {
+        return Math.floor(await super.parse(input, meta))
     }
 
 }
