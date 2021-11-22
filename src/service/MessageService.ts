@@ -101,7 +101,7 @@ module MessageService {
         return new Promise(async resolve => {
             const msgOptions = { embeds: [{ description, theme: Theme.WARNING }], components: [
                 new MessageActionRow().addComponents([
-                    new MessageButton().setCustomId('yes').setLabel('Yes').setStyle('PRIMARY').setEmoji(Emoji.SUCCESS),
+                    new MessageButton().setCustomId('yes').setLabel('Yes').setStyle('SUCCESS').setEmoji(Emoji.SUCCESS),
                     new MessageButton().setCustomId('no').setLabel('No').setStyle('SECONDARY').setEmoji(Emoji.FAIL)
                 ])
             ] }
@@ -232,8 +232,14 @@ class PageManager<Target> {
     }
 
     private async render(editedMessage?: Message) {
-        const content = await this.renderer(this.page)
-        if (content.page) this.addPageFooter(content)
+        let content = await this.renderer(this.page)
+
+        if (content.page) {
+            const maxPage = Math.ceil(content.page.nItems / content.page.size) - 1
+            if (content.page.current > maxPage) content = await this.renderer({ ...this.page, page: maxPage })
+        }
+
+        this.addPageFooter(content)
 
         const buttonRows = this.createButtons(content.buttons || [], content.page)
         const selectRows = this.createSelects(content.selects || [])

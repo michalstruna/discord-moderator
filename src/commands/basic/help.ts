@@ -7,7 +7,7 @@ import { Int, Text } from "../../model/Arg"
 import Command, { Action } from "../../model/Command"
 import { truncate } from '../../utils/Strings'
 import CommandCategory from '../../constants/CommandCategory'
-import { InvalidInputError } from '../../model/Error'
+import { CanceledError, InvalidInputError } from '../../model/Error'
 import { getPageItems } from '../../utils/Collections'
 import Icon from '../../constants/Icon'
 
@@ -75,9 +75,16 @@ export default new Command({
                 new Int('page').min(1).default(1)
             ],
             execute: async ({ item, page }, meta) => {
-                const isCommand = !!CommandService.getByName(item)
-                const category = CommandService.getAllCategories().find(c => c.toLowerCase() === item.toLowerCase())
-                if (item && !isCommand && !category) throw new InvalidInputError(`Unrecognized command or category \`${item}\`.`)
+                const topResult = CommandService.getTopResult(item || CommandCategory.BASIC)
+                if (!topResult) throw new InvalidInputError(`Unrecognized command or category \`${item}\`.`)
+                const { rating, target: name } = topResult
+                const isCommand = !!CommandService.getByName(name)
+
+                if (
+                    item &&
+                    rating < 1 &&
+                    !(await MessageService.confirm(meta.msg.channel, `Did you mean \`${name}\`?`, [meta.msg.author.id]))
+                ) throw new CanceledError()
 
                 MessageService.pages(meta.msg.channel, async ({ level, item, page }) => {
                     switch (level) {
@@ -95,6 +102,7 @@ export default new Command({
                         default:
                             const categories = CommandService.getAllCategories()
                             const commands = CommandService.getAllByCategory(item as CommandCategory)
+                            // TODO: Pagination utils?
                             
                             return {
                                 title: `Help • ${item}`,
@@ -113,7 +121,7 @@ export default new Command({
                             }
                     }
                 }, {
-                    defaultPage: isCommand ? { level: Level.COMMAND, item } : { level: Level.CATEGORY, item: category?.toString() || CommandCategory.BASIC, page: page - 1 },
+                    defaultPage: isCommand ? { level: Level.COMMAND, item: name } : { level: Level.CATEGORY, item: name, page: page - 1 },
                     users: [meta.msg.author.id]
                 })
             },

@@ -11,6 +11,10 @@ export class DefaultError extends Error {
         this.color = color
     }
 
+    public getMessage() {
+        return this.message
+    }
+
     public getTitle() {
         return this.title
     }
@@ -23,8 +27,8 @@ export class DefaultError extends Error {
 
 const factory = (color: Color, defaultTitle: string | null) => class extends DefaultError {
 
-    constructor(message: string, title: string | null = defaultTitle) {
-        super(message, title, color)
+    constructor(message?: string, title: string | null = defaultTitle) {
+        super(message || 'Something bad happened.', title, color)
     }
 
 }
@@ -35,3 +39,5 @@ export const ForbiddenError = factory(Color.ORANGE, 'Forbidden action')
 export const NotFoundError = factory(Color.GRAY, null)
 export const MentionNotFoundError = factory(Color.RED, 'Mention was not found')
 export const MissingPermissionsError = factory(Color.BLACK, 'Missing permissions')
+
+export class CanceledError {}

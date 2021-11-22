@@ -17,8 +17,6 @@ const handleCommand = async (meta: ActionMeta) => {
 
         if (command && await MessageService.confirm(meta.msg.channel, `Did you mean \`${command.name}\`?`, [meta.msg.author.id])) {
             CommandService.execute(command, argParser!, meta)
-        } else {
-            await MessageService.sendFail(meta.msg.channel, `Command \`${commandName}\` was not found.`)
         }
     }
 }

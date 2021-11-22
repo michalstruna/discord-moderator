@@ -1,19 +1,20 @@
 import { Guild } from 'discord.js'
 import fs from 'fs'
 import path from 'path'
-import { findBestMatch } from 'string-similarity'
+import { findBestMatch, Rating } from 'string-similarity'
 
 import Color from '../constants/Color'
 import Command from '../model/Command'
 import { ActionOptions, ActionMeta, CommandOptions, Part, ServerAction, ServerAuth, ServerCommand, ServerRoles } from '../model/types'
 import { ArgParser, ParsedArgs } from '../model/Arg'
-import { DefaultError } from '../model/Error'
+import { CanceledError, DefaultError } from '../model/Error'
 import MessageService from './MessageService'
 import Config from '../constants/Config'
 import CommandCategory from '../constants/CommandCategory'
 
 const commands = new Map<string, CommandOptions>()
 const aliases = new Map<string, string>()
+const mapLowerCaseToName = new Map<string, string>()
 
 module CommandService {
 
@@ -22,6 +23,7 @@ module CommandService {
         aliases.clear()
 
         const categories = fs.readdirSync(path.join(__dirname, '..', 'commands'))
+        Object.values(CommandCategory).forEach(c => mapLowerCaseToName.set(c.toLowerCase(), c))
 
         for (const category of categories) {
             const files = fs.readdirSync(path.join(__dirname, '..', 'commands', category))
@@ -31,9 +33,11 @@ module CommandService {
                 command.setCategory(category)
                 commands.set(command.getName(), command.getOptions())
                 aliases.set(command.getName(), command.getName())
+                mapLowerCaseToName.set(command.getName().toLowerCase(), command.getName())
 
                 for (const alias of command.getAliases() || []) {
                     aliases.set(alias, command.getName())
+                    mapLowerCaseToName.set(alias.toLowerCase(), alias)
                 }
             }
         }
@@ -65,8 +69,14 @@ module CommandService {
     }
 
     export const getBySimilarName = (name: string, threshold: number = Config.COMMAND_SIMILARITY_TRESHOLD): CommandOptions | undefined => {
-        const { bestMatch, bestMatchIndex } = findBestMatch(name, Array.from(aliases.keys()))
+        const { bestMatch, bestMatchIndex } = findBestMatch(name.toLowerCase(), Array.from(aliases.keys()))
         if (bestMatchIndex >= threshold) return commands.get(aliases.get(bestMatch.target)!)
+    }
+
+    export const getTopResult = (keyword: string, threshold: number = Config.COMMAND_SIMILARITY_TRESHOLD): Rating | undefined => {
+        const allItems = Array.from(mapLowerCaseToName.keys())
+        const { bestMatch } = findBestMatch(keyword.toLowerCase(), allItems)
+        if (bestMatch.rating >= threshold) return { ...bestMatch, target: mapLowerCaseToName.get(bestMatch.target)! }
     }
 
     export const getAll = () => {
@@ -96,12 +106,12 @@ module CommandService {
             await action.execute(analyzedArgs, meta) // TODO: Check perms.
             if (action.react !== false) MessageService.reactSuccess(meta.msg)
         } catch (error) {
-            console.error(error)
+            if (error instanceof CanceledError) return
+            console.log('CommandService.execute', error)
             MessageService.reactFail(meta.msg)
 
             if (error instanceof DefaultError) {
-                const errTitle = error.getTitle() === undefined ? 'Something bad happened' : error.getTitle()
-                MessageService.sendFail(meta.msg.channel, error.message, errTitle || undefined, error.getColor())
+                MessageService.sendFail(meta.msg.channel, error.getMessage(), error.getTitle() || undefined, error.getColor())
             } else if (error instanceof Error) {
                 MessageService.sendFail(meta.msg.channel, error.message, undefined, Color.RED)
             }
