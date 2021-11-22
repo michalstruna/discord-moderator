@@ -1,7 +1,8 @@
-import { MessageEmbedOptions, MessageOptions as DiscordMessageOptions } from 'discord.js'
+import { MessageButtonStyle, MessageEmbedOptions, MessageOptions as DiscordMessageOptions } from 'discord.js'
 
 import Color from '../constants/Color'
 import Emoji from '../constants/Emoji'
+import Icon from '../constants/Icon'
 
 export type Theme = [Color, Emoji]
 
@@ -14,7 +15,14 @@ export type MessageOptions = Omit<DiscordMessageOptions, 'embeds'> & {
 }
 
 export type PageTarget = Record<string, any>
-export type PageButton<Target> = { label: string, target: Target }
+
+export type PageButton<Target> = {
+    label: string
+    target: Target
+    disabled?: boolean
+    type?: MessageButtonStyle
+}
+
 export type PageSelect<Target> = {
     placeholder?: string
     options: {
@@ -24,9 +32,19 @@ export type PageSelect<Target> = {
     }[]
 }
 
+export type Page = {
+    current: number
+    nItems: number
+    size: number
+    recordsName?: string
+    footerIcon?: Icon
+    footerSuffix?: string
+}
+
 export type PageOptions<Target> = EmbedOptions & {
     buttons?: PageButton<Target>[]
     selects?: PageSelect<Target>[]
+    page?: Page
 }
 
 export type PageRenderer<Target> = (target: Target) => Promise<PageOptions<Target>>

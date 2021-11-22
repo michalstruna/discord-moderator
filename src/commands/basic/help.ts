@@ -3,11 +3,13 @@ import Emoji from '../../constants/Emoji'
 import CommandService from '../../service/CommandService'
 import MessageService from '../../service/MessageService'
 import { actionPerms } from '../../utils/Outputs'
-import { Text } from "../../model/Arg"
+import { Int, Text } from "../../model/Arg"
 import Command, { Action } from "../../model/Command"
 import { truncate } from '../../utils/Strings'
 import CommandCategory from '../../constants/CommandCategory'
 import { InvalidInputError } from '../../model/Error'
+import { getPageItems } from '../../utils/Collections'
+import Icon from '../../constants/Icon'
 
 const getHelp = async (commands: CommandOptions[], { server }: ActionMeta) => {
     return commands.map(command => `**${command.name}:** ${command.description} ${Emoji.SUCCESS}\n${command.actions.map(a => `> **${a.name}:** ${truncate(getActionPattern(server, command, a), 100, '...`')} - ${a.description}`).join('\n')}`).join('\n\n')
@@ -58,7 +60,7 @@ enum Level {
     CATEGORY
 }
 
-const COMMAND_PAGE_SIZE = 1
+const CATEGORY_PAGE_SIZE = 1
 
 export default new Command({
     name: 'help',
@@ -69,14 +71,15 @@ export default new Command({
         Action({
             name: 'get',
             args: [
-                new Text('item', 'Name of command or category.')
+                new Text('item', 'Name of command or category.'),
+                new Int('page').min(1).default(1)
             ],
-            execute: async ({ item }, meta) => {
+            execute: async ({ item, page }, meta) => {
                 const isCommand = !!CommandService.getByName(item)
-                const isCategory = CommandService.getAllCategories().map(c => c.toLowerCase()).includes(item)
-                if (item && !isCommand && !isCategory) throw new InvalidInputError(`Unrecognized command or category \`${item}\`.`)
+                const category = CommandService.getAllCategories().find(c => c.toLowerCase() === item.toLowerCase())
+                if (item && !isCommand && !category) throw new InvalidInputError(`Unrecognized command or category \`${item}\`.`)
 
-                MessageService.pages(meta.msg.channel, async ({ level, item }) => {
+                MessageService.pages(meta.msg.channel, async ({ level, item, page }) => {
                     switch (level) {
                         case Level.COMMAND:
                             const command = CommandService.getByName(item)!
@@ -86,30 +89,31 @@ export default new Command({
                                 description: await getCommandHelp(command, meta),
                                 theme: MessageService.Theme.INFO,
                                 buttons: [
-                                    { label: 'Back to ' + command.category, target: { level: Level.CATEGORY, item: command.category } }
+                                    { label: 'Back to ' + command.category, target: { level: Level.CATEGORY, item: command.category, page: page || 0 } }
                                 ]
                             }
                         default:
                             const categories = CommandService.getAllCategories()
                             const commands = CommandService.getAllByCategory(item as CommandCategory)
-    
+                            
                             return {
                                 title: `Help • ${item}`,
-                                description: await getHelp(commands, meta),
+                                description: await getHelp(getPageItems(commands, page!, CATEGORY_PAGE_SIZE), meta),
                                 theme: MessageService.Theme.INFO,
-                                buttons: categories.map(c => ({ label: c, target: { level: Level.CATEGORY, item: c } })),
+                                buttons: categories.map(c => ({ label: c, target: { level: Level.CATEGORY, item: c, page: 0 } })),
                                 selects: [{
                                     placeholder: 'Select command',
                                     options: commands.map(c => ({
                                         label: c.name,
                                         description: c.description,
-                                        target: { level: Level.COMMAND, item: c.name }
+                                        target: { level: Level.COMMAND, item: c.name, page }
                                     }))
-                                }]
+                                }],
+                                page: { current: page!, nItems: commands.length, size: CATEGORY_PAGE_SIZE, footerIcon: Icon.PAGINATION, recordsName: 'commands' }
                             }
                     }
                 }, {
-                    defaultPage: isCommand ? { level: Level.COMMAND, item } : { level: Level.CATEGORY, item: item || CommandCategory.BASIC },
+                    defaultPage: isCommand ? { level: Level.COMMAND, item } : { level: Level.CATEGORY, item: category?.toString() || CommandCategory.BASIC, page: page - 1 },
                     users: [meta.msg.author.id]
                 })
             },

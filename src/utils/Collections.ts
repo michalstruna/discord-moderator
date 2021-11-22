@@ -19,3 +19,9 @@ export const multiFind = <Item>(collection: Collection<string, Item>, value: str
 export const unique = <Item>(array: Item[]) => {
     return Array.from(new Set(array).values())
 }
+
+export const getPageItems = <Item>(array: Item[], page: number, pageSize: number) => {
+    const startIndex = page * pageSize
+    const endIndex = startIndex + pageSize
+    return array.slice(startIndex, endIndex)
+}

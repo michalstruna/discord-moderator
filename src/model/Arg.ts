@@ -163,7 +163,7 @@ export abstract class Arg<Name extends string, Result> {
     }
 
     public async parse(input: string | string[], meta: ActionMeta): Promise<Result> {
-        return input as any
+        return (input ?? this.getDefault()) as any
     }
 
     public getName() {

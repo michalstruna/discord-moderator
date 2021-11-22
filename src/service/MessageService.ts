@@ -1,13 +1,14 @@
 import { GuildMember, Interaction, Message, MessageActionRow, MessageButton, MessageEmbedOptions, MessageSelectMenu, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
-import Equal from 'deep-equal'
+import { v4 as Id } from 'uuid'
 
 import Color from '../constants/Color'
 import Config from '../constants/Config'
 import Emoji from '../constants/Emoji'
 import { ArgParser } from '../model/Arg'
 import { ForbiddenError } from '../model/Error'
-import { MessageOptions, PageButton, PageRenderer, PageSelect, PagesOptions, Theme } from './type'
+import {  MessageOptions, Page, PageButton, PageOptions, PageRenderer, PageSelect, PagesOptions, Theme } from './type'
 import { truncate } from '../utils/Strings'
+import { equals } from '../utils/Objects'
 module MessageService {
 
     export const Theme: Record<string, Theme> = {
@@ -131,23 +132,38 @@ class PageManager<Target> {
     private renderer: PageRenderer<Target>
     private page: Target
     private options: PagesOptions<Target>
+    private targets: Record<string, Target | undefined>
 
     public constructor(channel: TextBasedChannels, renderer: PageRenderer<Target>, options: PagesOptions<Target>) {
         this.channel = channel
         this.renderer = renderer
         this.page = options.defaultPage
         this.options = options
+        this.targets = {} // TODO: Cleaning.
+        
         this.render()
     }
 
-    private createButtons(pageButtons: PageButton<Target>[]) {
-        const buttons = pageButtons.map(b => (
-            new MessageButton()
+    private createButtons(pageButtons: PageButton<Target>[], page?: Page) {
+        let prevButton: PageButton<Target>, nextButton: PageButton<Target>
+
+        if (page) {
+            const nPages = Math.ceil(page.nItems / page.size)
+            pageButtons.push(prevButton = { label: 'Previous', target: { ...this.page, page: page.current - 1 }, disabled: page.current === 0, type: 'SECONDARY' })
+            pageButtons.push(nextButton = { label: 'Next', target: { ...this.page, page: page.current + 1 }, disabled: page.current === nPages - 1, type: 'SECONDARY' })
+        }
+
+        const buttons = pageButtons.map(b => {
+            const id = Id()
+            this.targets[id] = b.target
+            const targetExclude = prevButton === b || nextButton === b ? [] : ['page']
+
+            return new MessageButton()
                 .setLabel(b.label)
-                .setStyle('PRIMARY')
-                .setCustomId(JSON.stringify(b.target)) // TODO: If target exists.
-                .setDisabled(Equal(b.target, this.page))
-        ))
+                .setStyle(b.type || 'PRIMARY')
+                .setCustomId(id)
+                .setDisabled(equals(b.target, this.page, targetExclude) || b.disabled || false)
+        })
 
         const rows = []
 
@@ -167,11 +183,16 @@ class PageManager<Target> {
                 .setCustomId(`select_${i}`)
                 .setPlaceholder(s.placeholder || '')
                 .addOptions(
-                    s.options.map((item, i) => ({
-                        label: item.label,
-                        description: truncate(item.description || '', Config.SELECT_DESCRIPTION_MAX_LENGTH),
-                        value: JSON.stringify(item.target) // TODO: If target exists.
-                    }))
+                    s.options.map((item, i) => {
+                        const id = Id()
+                        this.targets[id] = item.target
+
+                        return {
+                            label: item.label,
+                            description: truncate(item.description || '', Config.SELECT_DESCRIPTION_MAX_LENGTH),
+                            value: id
+                        }
+                    })
                 )
             )
         ))
@@ -182,11 +203,11 @@ class PageManager<Target> {
         const collector = message.createMessageComponentCollector({ filter, time: Config.BUTTONS_DURATION }) 
 
         collector.on('collect', async i => {
-            if (i.isButton()) {
-                this.page = JSON.parse(i.customId)
-            } else if (i.isSelectMenu()) {
-                this.page = JSON.parse(i.values[0])
-            }
+            let id = null
+            if (i.isButton()) id = i.customId
+            if (i.isSelectMenu()) id = i.values[0]
+            const target = this.targets[id!]
+            if (target) this.page = target
 
             this.render(message)
             i.deferUpdate()
@@ -201,9 +222,20 @@ class PageManager<Target> {
         })
     }
 
+    private async addPageFooter(options: PageOptions<Target>) {
+        const { current, nItems, size, recordsName, footerIcon, footerSuffix } = options.page!
+
+        options.footer = {
+            text: `Page: ${current + 1}/${Math.ceil(nItems / size)} • Total ${recordsName || 'records'}: ${nItems}${footerSuffix ? `• ${footerSuffix}` : ''}`,
+            icon_url: footerIcon
+        }
+    }
+
     private async render(editedMessage?: Message) {
         const content = await this.renderer(this.page)
-        const buttonRows = this.createButtons(content.buttons || [])
+        if (content.page) this.addPageFooter(content)
+
+        const buttonRows = this.createButtons(content.buttons || [], content.page)
         const selectRows = this.createSelects(content.selects || [])
 
         const messageContent = {
