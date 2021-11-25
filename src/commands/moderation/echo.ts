@@ -80,7 +80,7 @@ export default new Command({
                 }
             },
             description: 'Send message to the channel.',
-            examples: [['Text.'], ['#general', 'Text.']]
+            examples: [['Text.'], ['#general', '-as', '@Michal', '-description', 'Announcement']]
         })
     ]
 })

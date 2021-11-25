@@ -60,7 +60,7 @@ enum Level {
     CATEGORY
 }
 
-const CATEGORY_PAGE_SIZE = 1
+const CATEGORY_PAGE_SIZE = 5
 
 export default new Command({
     name: 'help',

@@ -16,12 +16,12 @@ export default new Command({
             args: [
                 new Cmd('command', 'Name of command.').req(),
                 new Text('action', 'Command action.'),
-                new List('roles', 'List of allowed roles.', new Role()).req(),
+                new List('roles', 'List of allowed roles.', new Role()),
                 new List('except', 'List of forbidden roles.', new Role()).explicit()
             ],
             auth: { permit: [RoleType.ADMIN] },
-            execute: async ({ command, action, roles, except }, {  }) => {
-                
+            execute: async ({ command, action, roles, except }, { msg }) => {
+                await ServerService.setCommandAuth(msg.guild!, command.name, { permit: roles, deny: except })
             },
             description: 'Set perms for command/action.',
             examples: [['echo', '@Admin', '@Verified', '-except', '@Muted']]

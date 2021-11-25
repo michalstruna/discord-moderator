@@ -4,7 +4,7 @@ import { Guild } from 'discord.js'
 import Db from './Db'
 import RoleType from '../constants/RoleType'
 import CommandService from './CommandService'
-import { ServerData, ServerRoles } from '../model/types'
+import { Auth, ServerData, ServerRoles } from '../model/types'
 
 module ServerService {
 
@@ -23,6 +23,10 @@ module ServerService {
         const everyoneId = guild.roles.everyone.id
         roles = roles || { [RoleType.ADMIN]: everyoneId, [RoleType.MOD]: everyoneId, [RoleType.MEMBER]: everyoneId }
         return await Db.update(Db.Server, { id: guild.id }, { roles, commands: CommandService.exportAll(roles, guild) })
+    }
+
+    export const setCommandAuth = async (guild: Guild, commandName: string, auth: Auth) => {
+        const everyoneId = guild.roles.everyone.id
     }
     
     export const updateById = async (id: string, update: Partial<ServerData>) => {

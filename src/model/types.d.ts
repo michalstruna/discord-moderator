@@ -1,4 +1,4 @@
-import { Client, Message } from 'discord.js'
+import { Client, Message, Role } from 'discord.js'
 import CommandCategory from '../constants/CommandCategory'
 
 import RoleType from '../constants/RoleType'
@@ -22,7 +22,7 @@ export type ServerCommand = {
     enabled: boolean
 }
 
-export type Auth = {
+export type Auth<RoleType = Role> = {
     permit?: RoleType[]
     deny?: RoleType[]
 }
@@ -50,7 +50,7 @@ type ArgArrayToObject<Args extends readonly Arg<any, any>[]> = {
 export type ActionOptions<A extends readonly Arg<any, any>[] = any> = {
     name: string
     args?: readonly [...A]
-    auth?: Auth
+    auth?: Auth<RoleType>
     execute: (args: ArgArrayToObject<A>, meta: ActionMeta) => Promise<void>
     description?: string
     examples?: string[][]

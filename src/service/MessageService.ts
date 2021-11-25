@@ -237,9 +237,8 @@ class PageManager<Target> {
         if (content.page) {
             const maxPage = Math.ceil(content.page.nItems / content.page.size) - 1
             if (content.page.current > maxPage) content = await this.renderer({ ...this.page, page: maxPage })
+            this.addPageFooter(content)
         }
-
-        this.addPageFooter(content)
 
         const buttonRows = this.createButtons(content.buttons || [], content.page)
         const selectRows = this.createSelects(content.selects || [])
