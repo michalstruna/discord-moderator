@@ -304,6 +304,10 @@ export class Channel<Name extends string> extends Arg<Name, TextBasedChannels> {
 
 export class Real<Name extends string> extends Arg<Name, number> {
 
+    public test(input: string) {
+        return /[0-9]/.test(input)
+    }
+
     public async parse(input: string, meta: ActionMeta) {
         const val = parseFloat(await super.parse(input, meta) as any)
 

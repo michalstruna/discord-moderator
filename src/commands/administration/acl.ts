@@ -1,13 +1,13 @@
 import RoleType from '../../constants/RoleType'
 import MessageService from '../../service/MessageService'
 import ServerService from '../../service/ServerService'
-import { Text, List, Role, Bool, Cmd } from '../../model/Arg'
+import { Text, List, Role, Bool, Cmd, Switch } from '../../model/Arg'
 import { role, keyValueList, actionPerms, everyone } from '../../utils/Outputs'
 import Command, { Action } from '../../model/Command'
 import CommandCategory from '../../constants/CommandCategory'
  
 export default new Command({
-    name: 'perms',
+    name: 'acl',
     category: CommandCategory.ADMINISTRATION,
     description: 'Manage command permissions.',
     actions: [
@@ -15,13 +15,14 @@ export default new Command({
             name: 'set',
             args: [
                 new Cmd('command', 'Name of command.').req(),
-                new Text('action', 'Command action.'),
-                new List('roles', 'List of allowed roles.', new Role()),
-                new List('except', 'List of forbidden roles.', new Role()).explicit()
+                new Text('action', 'Command action.').explicit(),
+                new List('permit', 'List of allowed roles.', new Role()).req(),
+                new List('deny', 'List of denied roles.', new Role()).explicit()
             ],
             auth: { permit: [RoleType.ADMIN] },
-            execute: async ({ command, action, roles, except }, { msg }) => {
-                await ServerService.setCommandAuth(msg.guild!, command.name, { permit: roles, deny: except })
+            execute: async ({ command, action, permit, deny }, { server }) => {
+                const actions = action ? [action] : undefined
+                await ServerService.setCommandAcl(server.id, command.name, actions, { permit, deny })
             },
             description: 'Set perms for command/action.',
             examples: [['echo', '@Admin', '@Verified', '-except', '@Muted']]
@@ -29,7 +30,7 @@ export default new Command({
         Action({
             name: 'default',
             args: [
-                new Bool('default').req(),
+                new Switch('default'),
                 new Role('admin', 'Admin role.').default(Role.EVERYONE),
                 new Role('mod', 'Mod role.').default(Role.EVERYONE),
                 new Role('member', 'Member role.').default(Role.EVERYONE)
@@ -45,12 +46,17 @@ export default new Command({
         Action({
             name: 'reset',
             args: [
-                new Bool('reset').req(),
-                new Cmd('command')
+                new Switch('reset'),
+                new Cmd('command'),
+                new Text('action')
             ],
             auth: { permit: [RoleType.ADMIN] },
-            execute: async (args, meta) => {
+            execute: async ({ command, action }, { server }) => {
+                if (command) {
+                    await ServerService.setCommandAcl(server.id, command.name, action ? [action] : undefined)
+                } else {
 
+                }
             },
             description: 'Reset all perms or perms of command.',
             examples: [['-reset'], ['-reset', 'prefix']]
@@ -66,7 +72,7 @@ export default new Command({
 
                     MessageService.sendInfo(msg.channel, keyValueList(command.actions.map(action => (
                         [action.name, actionPerms(serverCommand.actions[action.name], msg.guild!.roles.everyone.id)]
-                    )), true), `Perms • ${command.name}`)
+                    )), true), `ACL • ${command.name}`)
                 } else {
                     const roles = keyValueList([
                         ['Admin', RoleType.ADMIN], ['Mod', RoleType.MOD], ['Member', RoleType.MEMBER]

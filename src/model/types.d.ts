@@ -23,7 +23,7 @@ export type ServerCommand = {
 }
 
 export type Auth<RoleType = Role> = {
-    permit?: RoleType[]
+    permit: RoleType[]
     deny?: RoleType[]
 }
 

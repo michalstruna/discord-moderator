@@ -8,7 +8,7 @@ import { Auth, ServerData, ServerRoles } from '../model/types'
 
 module ServerService {
 
-    export const getById = async (id: string, guild: Guild): Promise<ServerData> => {
+    export const getById = async (id: string, guild?: Guild): Promise<ServerData> => {
         let server: ServerData = await Db.Server.findOne({ id }).lean()
     
         if (!server && guild) {
@@ -25,8 +25,24 @@ module ServerService {
         return await Db.update(Db.Server, { id: guild.id }, { roles, commands: CommandService.exportAll(roles, guild) })
     }
 
-    export const setCommandAuth = async (guild: Guild, commandName: string, auth: Auth) => {
-        const everyoneId = guild.roles.everyone.id
+    export const setCommandAcl = async (serverId: string, commandName: string, actionNames?: string[], auth?: Auth) => {
+        const actions = (await getById(serverId)).commands[commandName].actions
+
+        const permit = auth ? auth.permit.map(r => r.id) : []
+        const deny = auth ? (auth.deny || []).map(r => r.id) : []
+
+        for (const actionName in actions) {
+            if (actionNames && !actionNames.includes(actionName)) continue
+            const action = actions[actionName]
+            action.auth.permit = permit
+            action.auth.deny = deny
+        }
+
+        return await updateById(serverId, { [`commands.${commandName}.actions`]: actions })        
+    }
+
+    export const resetAcl = async (sererId: string) => {
+
     }
     
     export const updateById = async (id: string, update: Partial<ServerData>) => {
