@@ -1,8 +1,6 @@
 import Collection from '@discordjs/collection'
 
 const relations = [
-    (x: string, y: string) => x.toLowerCase() === y.toLowerCase(),
-    (x: string, y: string) => x.toLowerCase().startsWith(y.toLowerCase()),
     (x: string, y: string) => x.toLowerCase().includes(y.toLowerCase())
 ]
 

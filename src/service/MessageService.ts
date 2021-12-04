@@ -1,21 +1,23 @@
-import { GuildMember, Interaction, Message, MessageActionRow, MessageButton, MessageEmbedOptions, MessageSelectMenu, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
+import { ColorResolvable, GuildMember, Interaction, Message, MessageActionRow, MessageButton, MessageEmbedOptions, MessageSelectMenu, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
 import { v4 as Id } from 'uuid'
 
-import Color from '../constants/Color'
+import ColorType from '../constants/Color'
 import Config from '../constants/Config'
 import Emoji from '../constants/Emoji'
-import { ArgParser } from '../model/Arg'
+import { ArgParser, Bool, Channel, Member, Text, Color } from '../model/Arg'
 import { ForbiddenError } from '../model/Error'
 import {  MessageOptions, Page, PageButton, PageOptions, PageRenderer, PageSelect, PagesOptions, Theme } from './type'
 import { truncate } from '../utils/Strings'
 import { equals } from '../utils/Objects'
+import { ActionMeta } from '../model/types'
+
 module MessageService {
 
     export const Theme: Record<string, Theme> = {
-        SUCCESS: [Color.GREEN, Emoji.SUCCESS],
-        FAIL: [Color.RED, Emoji.FAIL],
-        INFO: [Color.BLUE, Emoji.INFO],
-        WARNING: [Color.GOLD, Emoji.WARNING]
+        SUCCESS: [ColorType.GREEN, Emoji.SUCCESS],
+        FAIL: [ColorType.RED, Emoji.FAIL],
+        INFO: [ColorType.BLUE, Emoji.INFO],
+        WARNING: [ColorType.GOLD, Emoji.WARNING]
     }
 
     export const react = async (msg: Message, emoji: string) => {
@@ -54,11 +56,11 @@ module MessageService {
 
     const webhooks: Server = {}
 
-    export const sendMemberWebhook = async (channel: TextBasedChannels, member: GuildMember, content: string | MessageEmbedOptions) => {
-        return await sendWebhook(channel, member.user.displayAvatarURL({ dynamic: true }), member.displayName, content)
+    export const sendMemberWebhook = async (channel: TextBasedChannels, member: GuildMember, message: MessageOptions) => {
+        return await sendWebhook(channel, member.user.displayAvatarURL({ dynamic: true }), member.displayName, message)
     }
 
-    export const sendWebhook = async (channel: TextBasedChannels, avatar: string, name: string, content: string | MessageEmbedOptions) => {
+    export const sendWebhook = async (channel: TextBasedChannels, avatar: string, name: string, message: MessageOptions) => {
         if (!('guild' in channel) || !('createWebhook' in channel)) throw new ForbiddenError('Webhooks are not supported here.')
         if (!webhooks[channel.guild.id]) webhooks[channel.guild.id] = {}
         if (!webhooks[channel.guild.id][channel.id]) webhooks[channel.guild.id][channel.id] = {}
@@ -77,14 +79,13 @@ module MessageService {
         }
 
         const webhookClient = channelList[id][1]
-        const isPlain = typeof content === 'string'
-        await webhookClient.send({ content: isPlain ? content : undefined, username: name, avatarURL: avatar, embeds: isPlain ? undefined : [content] })
+        await webhookClient.send({ ...message, username: name, avatarURL: avatar })
     }
 
-    export const sendSuccess = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { embeds: [{ description, title, color, theme: Theme.SUCCESS }] })
-    export const sendFail = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { embeds: [{ description, title, color, theme: Theme.FAIL }] })
-    export const sendInfo = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { embeds: [{ description, title, color, theme: Theme.INFO }] })
-    export const sendWarning = (channel: TextBasedChannels, description: string, title?: string, color?: Color) => send(channel, { embeds: [{ description, title, color, theme: Theme.WARNING }] })
+    export const sendSuccess = (channel: TextBasedChannels, description: string, title?: string, color?: ColorType) => send(channel, { embeds: [{ description, title, color, theme: Theme.SUCCESS }] })
+    export const sendFail = (channel: TextBasedChannels, description: string, title?: string, color?: ColorType) => send(channel, { embeds: [{ description, title, color, theme: Theme.FAIL }] })
+    export const sendInfo = (channel: TextBasedChannels, description: string, title?: string, color?: ColorType) => send(channel, { embeds: [{ description, title, color, theme: Theme.INFO }] })
+    export const sendWarning = (channel: TextBasedChannels, description: string, title?: string, color?: ColorType) => send(channel, { embeds: [{ description, title, color, theme: Theme.WARNING }] })
 
     export const parseCommand = (text: string, prefix: string): [string | null, ArgParser | null] => {
         let input = text.trim()
@@ -119,6 +120,80 @@ module MessageService {
 
     export const pages = async <Target>(channel: TextBasedChannels, render: PageRenderer<Target>, options: PagesOptions<Target>) => {
         new PageManager<Target>(channel, render, options)
+    }
+
+
+
+    type ArgsEmbed = {
+        title: string
+        color: ColorResolvable
+        url: string
+        'author-name': string
+        'author-icon_url': string
+        'thumbnail-url': string
+        'image-url': string
+        timestamp: string
+        'footer-text': string
+        'footer-icon_url': string
+        description: string
+    }
+
+    type EchoArgs = ArgsEmbed & MessageOptions & {
+        channel: TextBasedChannels
+        server?: boolean
+        as?: GuildMember
+    }
+
+    export const echo = async ({ channel, server, as, ...message }: EchoArgs, { msg }: ActionMeta) => {
+        if (server) {
+            MessageService.sendWebhook(channel, msg.guild!.iconURL({ dynamic: true })!, msg.guild!.name, buildMessage(message))
+        } else if (as) {
+            MessageService.sendMemberWebhook(channel, as, buildMessage(message))
+        } else {
+            channel.send(buildMessage(message))
+        }
+    }
+
+    const buildMessage = (src: ArgsEmbed): MessageOptions => {
+        const buildEmbed = (src: ArgsEmbed): MessageEmbedOptions => {
+            const result: Record<string, any> = {}
+        
+            for (const prop in src) {
+                if (prop.includes('-')) {
+                    const [outer, inner] = prop.split('-')
+                    if (!result[outer]) result[outer] = {}
+                    result[outer][inner] = src[prop as keyof ArgsEmbed]
+                } else {
+                    result[prop] = src[prop as keyof ArgsEmbed]
+                }
+            }
+        
+            return result
+        }
+
+        const isEmbed = src.title || src.color
+        let result = isEmbed ? { ...src, embeds: [buildEmbed(src)] } : { ...src, content: src.description }
+
+        return result
+    }
+
+    export const getEchoArgs = () => {
+        return [
+            new Bool('server'),
+            new Member('as', 'Send message with identity of the user.').explicit(),
+            new Text('title').explicit().multi(),
+            new Color('color', 'Color in hex format.').explicit(),
+            new Text('url').explicit(),
+            new Text('author-name').explicit().multi(),
+            new Text('author-icon_url').explicit(),
+            new Text('thumbnail-url').explicit(),
+            new Text('image-url').explicit(),
+            new Text('timestamp').explicit(),
+            new Text('footer-text').explicit().multi(),
+            new Text('footer-icon_url').explicit(),
+            new Channel('channel').default(Channel.CURRENT),
+            new Text('description', 'Text you want to send.').req().multi()
+        ]
     }
 
 }

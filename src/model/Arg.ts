@@ -80,11 +80,11 @@ export class ArgParser {
             const isList = rule instanceof List
             if (!rule) throw new InvalidInputError(`Unexpected argument \`${key}\`.`)
             if (!rule.test(args[key])) throw new InvalidInputError(`Invalid argument \`${key}\`.`)
-            parsed[key] = isList ? [args[key]] : args[key]
+            parsed[key] = rule instanceof List && !Array.isArray(args[key]) ? [args[key]] : args[key]
 
             if (!isList || reqRules.length > tmpArgs.length) {
                 tmpRules = tmpRules.filter(r => r.getName() !== key)
-                reqRules = reqRules.filter(r => r.getName() != key)
+                reqRules = reqRules.filter(r => r.getName() !== key)
             }
         }
 
@@ -153,7 +153,7 @@ export abstract class Arg<Name extends string, Result> {
 
     public static isMulti(arg: Arg<any, any>): boolean {
         if (arg instanceof Text && arg.isMulti()) return true
-        if (arg instanceof Array) return true
+        if (arg instanceof List) return true
         return false
     }
 
