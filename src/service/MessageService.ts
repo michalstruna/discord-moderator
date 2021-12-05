@@ -4,7 +4,7 @@ import { v4 as Id } from 'uuid'
 import ColorType from '../constants/Color'
 import Config from '../constants/Config'
 import Emoji from '../constants/Emoji'
-import { ArgParser, Bool, Channel, Member, Text, Color } from '../model/Arg'
+import { ArgParser, Bool, Channel, Member, Text, Color, List } from '../model/Arg'
 import { ForbiddenError } from '../model/Error'
 import {  MessageOptions, Page, PageButton, PageOptions, PageRenderer, PageSelect, PagesOptions, Theme } from './type'
 import { truncate } from '../utils/Strings'
@@ -125,17 +125,18 @@ module MessageService {
 
 
     type ArgsEmbed = {
-        title: string
-        color: ColorResolvable
-        url: string
-        'author-name': string
-        'author-icon_url': string
-        'thumbnail-url': string
-        'image-url': string
-        timestamp: string
-        'footer-text': string
-        'footer-icon_url': string
-        description: string
+        title?: string
+        color?: ColorResolvable
+        url?: string
+        'author-name'?: string
+        'author-icon_url'?: string
+        'thumbnail-url'?: string
+        'image-url'?: string
+        timestamp?: string
+        'footer-text'?: string
+        'footer-icon_url'?: string
+        description?: string
+        fields?: string[]
     }
 
     type EchoArgs = ArgsEmbed & MessageOptions & {
@@ -159,7 +160,12 @@ module MessageService {
             const result: Record<string, any> = {}
         
             for (const prop in src) {
-                if (prop.includes('-')) {
+                if (prop === 'fields') {
+                    result.fields = src[prop]!.map(f => {
+                        const [name, value, inline] = f.split('++')
+                        return { name, value, inline: inline === 'inline' }
+                    })
+                } else if (prop.includes('-')) {
                     const [outer, inner] = prop.split('-')
                     if (!result[outer]) result[outer] = {}
                     result[outer][inner] = src[prop as keyof ArgsEmbed]
@@ -167,6 +173,8 @@ module MessageService {
                     result[prop] = src[prop as keyof ArgsEmbed]
                 }
             }
+
+            console.log(111, result)
         
             return result
         }
@@ -191,8 +199,9 @@ module MessageService {
             new Text('timestamp').explicit(),
             new Text('footer-text').explicit().multi(),
             new Text('footer-icon_url').explicit(),
+            new List('fields', 'List of fields title||description||inline', new Text()).explicit(),
             new Channel('channel').default(Channel.CURRENT),
-            new Text('description', 'Text you want to send.').req().multi()
+            new Text('description', 'Text you want to send.').multi()
         ]
     }
 
