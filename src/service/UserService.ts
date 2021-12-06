@@ -13,11 +13,15 @@ module UserService {
     }
 
     export const addRole = async (member: GuildMember, ...roleId: string[]) => {
-        return await member.roles.add(roleId.filter(r => !member.roles.cache.find(role => role.id === r)))
+        const added = roleId.filter(r => !member.roles.cache.find(role => role.id === r))
+        await member.roles.add(added)
+        return added
     }
     
     export const removeRole = async (member: GuildMember, ...roleId: string[]) => {
-        return await member.roles.remove(roleId.filter(r => member.roles.cache.find(role => role.id === r)))
+        const removed = roleId.filter(r => member.roles.cache.find(role => role.id === r))
+        await member.roles.remove(removed)
+        return removed
     }
     
 

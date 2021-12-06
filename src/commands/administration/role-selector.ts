@@ -17,26 +17,23 @@ export default new Command({
             name: 'create',
             args: [
                 new List('roles', 'List of roles for selectbox.', new Role()).explicit().req(),
+                new List('emojis', 'List of icons for roles.', new Text()).explicit().default([]),
                 new Int('max', 'Max number of roles.').min(1).max(25).default(25),
                 new Text('placeholder', 'Placeholder for selectbox.').explicit().multi(),
                 new Text('empty', 'Label for empty option.').explicit().multi(),
                 ...MessageService.getEchoArgs()
             ],
             auth: { permit: [RoleType.ADMIN] },
-            execute: async ({ roles, max, placeholder, empty, ...message }, meta) => {
-                const config = {
-                    roles: roles.map(r => r.id)
-                }
-
-                const options: MessageSelectOptionData[] = roles.map(r => ({ label: r.name, value: r.id }))
-                if (empty) options.unshift({ label: empty, value: '' })
+            execute: async ({ roles, emojis, max, placeholder, empty, ...message }, meta) => {
+                const options: MessageSelectOptionData[] = roles.map((r, i) => ({ label: r.name, value: r.id, emoji: emojis[i]}))
+                if (empty) options.unshift({ label: empty, value: ComponentId.EMPTY_VALUE })
 
                 MessageService.echo({
                     ...message,
                     components: [
                         new MessageActionRow().addComponents(
                             new MessageSelectMenu()
-                                .setCustomId(ComponentId.ROLE_SELECTOR + '__' + JSON.stringify(config))
+                                .setCustomId(ComponentId.ROLE_SELECTOR)
                                 .setMaxValues(Math.min(max, roles.length))
                                 .setPlaceholder(placeholder)
                                 .addOptions(options)
@@ -44,8 +41,8 @@ export default new Command({
                     ]
                 }, meta)
             },
-            description: 'Create new collector.',
-            examples: [['']] // TODO    
+            description: 'Create role collector.',
+            examples: [['Select gender.', '--roles Female Male Other']]
         })
     ]
 })

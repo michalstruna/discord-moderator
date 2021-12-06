@@ -1,4 +1,4 @@
-import { ColorResolvable, GuildMember, Interaction, Message, MessageActionRow, MessageButton, MessageEmbedOptions, MessageSelectMenu, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
+import { ColorResolvable, GuildMember, Interaction, InteractionReplyOptions, Message, MessageActionRow, MessageButton, MessageEmbedOptions, MessageSelectMenu, SelectMenuInteraction, TextBasedChannel, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
 import { v4 as Id } from 'uuid'
 
 import ColorType from '../constants/Color'
@@ -31,7 +31,9 @@ module MessageService {
     export const reactSuccess = (msg: Message) => react(msg, Emoji.SUCCESS)
     export const reactFail = (msg: Message) => react(msg, Emoji.FAIL)
 
-    export const send = (channel: TextBasedChannels, message: MessageOptions = {}, editedMessage?: Message) => {
+    type SendOutput = TextBasedChannels | SelectMenuInteraction | Message
+    
+    export const send = <Out extends SendOutput>(output: Out, message: MessageOptions = {}): Out extends SelectMenuInteraction ? Promise<void> : Promise<Message> => {
         for (const i in message.embeds || []) {
             const { theme, ...embed } = message.embeds![i]
             if (!theme) continue
@@ -46,7 +48,10 @@ module MessageService {
             message.embeds![i] = embed
         }
 
-        return editedMessage ? editedMessage.edit(message) : channel.send(message)
+        if ('edit' in output) return (output as Message).edit(message) as any
+        if ('send' in output) return output.send(message) as any
+        if ('reply' in output) return output.reply(message) as any
+        return null as any
     }
 
     // Map webhooks per server and channel.
@@ -82,10 +87,11 @@ module MessageService {
         await webhookClient.send({ ...message, username: name, avatarURL: avatar })
     }
 
-    export const sendSuccess = (channel: TextBasedChannels, description: string, title?: string, color?: ColorType) => send(channel, { embeds: [{ description, title, color, theme: Theme.SUCCESS }] })
-    export const sendFail = (channel: TextBasedChannels, description: string, title?: string, color?: ColorType) => send(channel, { embeds: [{ description, title, color, theme: Theme.FAIL }] })
-    export const sendInfo = (channel: TextBasedChannels, description: string, title?: string, color?: ColorType) => send(channel, { embeds: [{ description, title, color, theme: Theme.INFO }] })
-    export const sendWarning = (channel: TextBasedChannels, description: string, title?: string, color?: ColorType) => send(channel, { embeds: [{ description, title, color, theme: Theme.WARNING }] })
+    export const sendSuccess = (output: SendOutput, description: string, title?: string, options: MessageOptions = {}) => send(output, { embeds: [{ description, title, theme: Theme.SUCCESS }], ...options })
+    export const sendFail = (output: SendOutput, description: string, title?: string, options: MessageOptions = {}) => send(output, { embeds: [{ description, title, theme: Theme.FAIL }], ...options })
+    export const sendInfo = (output: SendOutput, description: string, title?: string, options: MessageOptions = {}) => send(output, { embeds: [{ description, title, theme: Theme.INFO }], ...options })
+    export const sendWarning = (output: SendOutput, description: string, title?: string, options: MessageOptions = {}) => send(output, { embeds: [{ description, title, theme: Theme.WARNING }], ...options })
+    export const sendEmbed = (output: SendOutput, description: string, title?: string, options: MessageOptions = {}) => send(output, { embeds: [{ description, title }], ...options })
 
     export const parseCommand = (text: string, prefix: string): [string | null, ArgParser | null] => {
         let input = text.trim()
@@ -173,8 +179,6 @@ module MessageService {
                     result[prop] = src[prop as keyof ArgsEmbed]
                 }
             }
-
-            console.log(111, result)
         
             return result
         }
@@ -332,7 +336,7 @@ class PageManager<Target> {
             components: [...buttonRows, ...selectRows]
         }
 
-        const message = await MessageService.send(this.channel, messageContent, editedMessage)
+        const message = await MessageService.send(editedMessage || this.channel, messageContent,)
         if (!editedMessage) this.createCollector(message)
     }
 

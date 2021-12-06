@@ -6,6 +6,8 @@ import RoleType from '../constants/RoleType'
 import CommandService from './CommandService'
 import { Auth, ServerData, ServerRoles } from '../model/types'
 
+// When new command is added, update DB.
+
 module ServerService {
 
     export const getById = async (id: string, guild?: Guild): Promise<ServerData> => {

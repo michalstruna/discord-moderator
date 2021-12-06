@@ -12,6 +12,7 @@ export type EmbedOptions = MessageEmbedOptions & {
 
 export type MessageOptions = Omit<DiscordMessageOptions, 'embeds'> & {
     embeds?: EmbedOptions[]
+    ephemeral?: boolean
 }
 
 export type PageTarget = Record<string, any>

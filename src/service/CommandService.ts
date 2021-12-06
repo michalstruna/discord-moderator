@@ -110,10 +110,10 @@ module CommandService {
             console.log('CommandService.execute', error)
             MessageService.reactFail(meta.msg)
 
-            if (error instanceof DefaultError) {
-                MessageService.sendFail(meta.msg.channel, error.getMessage(), error.getTitle() || undefined, error.getColor())
+            if (error instanceof DefaultError) { // TODO: Not working.
+                MessageService.send(meta.msg.channel, { embeds: [{ title: error.getTitle() || undefined, description: error.getMessage(), color: error.getColor(), theme: MessageService.Theme.FAIL }] })
             } else if (error instanceof Error) {
-                MessageService.sendFail(meta.msg.channel, error.message, undefined, Color.RED)
+                MessageService.sendFail(meta.msg.channel, error.message)
             }
         }
     }

@@ -41,3 +41,5 @@ export const MentionNotFoundError = factory(Color.RED, 'Mention was not found')
 export const MissingPermissionsError = factory(Color.BLACK, 'Missing permissions')
 
 export class CanceledError {}
+
+const err = new InvalidInputError()
