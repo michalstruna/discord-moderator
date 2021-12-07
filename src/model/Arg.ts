@@ -53,7 +53,7 @@ export class ArgParser {
         const string: string [] = []
 
         for (const rule of rules) {
-            if (rule instanceof Text) string.push(rule.getName())
+            if (!(rule instanceof Real) && !(rule instanceof Bool)) string.push(rule.getName())
             if (rule instanceof Bool) boolean.push(rule.getName())
 
             if (Arg.isMulti(rule)) {
