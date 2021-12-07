@@ -1,10 +1,10 @@
 import RoleType from '../../constants/RoleType'
-import MessageService from '../../service/MessageService'
 import ServerService from '../../service/ServerService'
-import { Text, List, Role, Bool, Cmd, Switch } from '../../model/Arg'
+import { Text, List, Role, Cmd, Switch } from '../../model/Arg'
 import { role, keyValueList, actionPerms, everyone } from '../../utils/Outputs'
 import Command, { Action } from '../../model/Command'
 import CommandCategory from '../../constants/CommandCategory'
+import Io from '../../service/Io'
  
 export default new Command({
     name: 'acl',
@@ -38,7 +38,7 @@ export default new Command({
             auth: {permit: [RoleType.ADMIN] },
             execute: async ({ admin, mod, member }, { msg }) => {
                 await ServerService.setRoles(msg.guild!, { [RoleType.ADMIN]: admin.id, [RoleType.MOD]: mod.id, [RoleType.MEMBER]: member.id })
-                MessageService.sendSuccess(msg.channel, `Admin (${admin.toString()}), mod (${mod.toString()}) and member (${member.toString()}) roles were set.`)
+                Io.success(msg.channel, `Admin (${admin.toString()}), mod (${mod.toString()}) and member (${member.toString()}) roles were set.`)
             },
             description: 'Set default perm roles.',
             examples: [['-default', '@Admin', '@Moderator']]
@@ -55,7 +55,7 @@ export default new Command({
                 if (command) {
                     await ServerService.setCommandAcl(server.id, command.name, action ? [action] : undefined)
                 } else {
-
+                    // TODO
                 }
             },
             description: 'Reset all perms or perms of command.',
@@ -70,9 +70,9 @@ export default new Command({
                 if (command) {
                     const serverCommand = server.commands[command.name]
 
-                    MessageService.sendInfo(msg.channel, keyValueList(command.actions.map(action => (
+                    Io.info(msg.channel, { description: keyValueList(command.actions.map(action => (
                         [action.name, actionPerms(serverCommand.actions[action.name], msg.guild!.roles.everyone.id)]
-                    )), true), `ACL • ${command.name}`)
+                    )), true), title: `ACL • ${command.name}` })
                 } else {
                     const roles = keyValueList([
                         ['Admin', RoleType.ADMIN], ['Mod', RoleType.MOD], ['Member', RoleType.MEMBER]
@@ -81,7 +81,7 @@ export default new Command({
                         return ([name, r === msg.guild!.roles.everyone.id ? everyone() : role(r)])
                     }), true)
     
-                    MessageService.sendInfo(msg.channel, roles, 'Global perms')
+                    Io.info(msg.channel, { description: roles, title: 'Global perms' })
                 }
             },
             description: 'Show global perms settings or perms for command.',

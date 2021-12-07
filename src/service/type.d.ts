@@ -4,8 +4,6 @@ import Color from '../constants/Color'
 import Emoji from '../constants/Emoji'
 import Icon from '../constants/Icon'
 
-export type Theme = [Color, Emoji]
-
 export type EmbedOptions = MessageEmbedOptions & {
     theme?: Theme
 }
@@ -52,4 +50,9 @@ export type PageRenderer<Target> = (target: Target) => Promise<PageOptions<Targe
 export type PagesOptions<Target> = {
     defaultPage: Target
     users?: string[]
+}
+
+export type Theme = {
+    color: Color
+    emoji: Emoji
 }

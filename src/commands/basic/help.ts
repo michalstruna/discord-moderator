@@ -1,7 +1,7 @@
 import { ActionOptions, ActionMeta, CommandOptions, ServerData } from "../../model/types"
 import Emoji from '../../constants/Emoji'
 import CommandService from '../../service/CommandService'
-import MessageService from '../../service/MessageService'
+import Io from '../../service/Io'
 import { actionPerms } from '../../utils/Outputs'
 import { Int, Text } from "../../model/Arg"
 import Command, { Action } from "../../model/Command"
@@ -83,10 +83,10 @@ export default new Command({
                 if (
                     item &&
                     rating < 1 &&
-                    !(await MessageService.confirm(meta.msg.channel, `Did you mean \`${name}\`?`, [meta.msg.author.id]))
+                    !(await Io.confirm(meta.msg.channel, `Did you mean \`${name}\`?`, [meta.msg.author.id]))
                 ) throw new CanceledError()
 
-                MessageService.pages(meta.msg.channel, async ({ level, item, page }) => {
+                Io.pages(meta.msg.channel, async ({ level, item, page }) => {
                     switch (level) {
                         case Level.COMMAND:
                             const command = CommandService.getByName(item)!
@@ -94,7 +94,7 @@ export default new Command({
                             return {
                                 title: `Help • ${item}`,
                                 description: await getCommandHelp(command, meta),
-                                theme: MessageService.Theme.INFO,
+                                theme: Io.Theme.INFO,
                                 buttons: [
                                     { label: 'Back to ' + command.category, target: { level: Level.CATEGORY, item: command.category, page: page || 0 } }
                                 ]
@@ -107,7 +107,7 @@ export default new Command({
                             return {
                                 title: `Help • ${item}`,
                                 description: await getHelp(getPageItems(commands, page!, CATEGORY_PAGE_SIZE), meta),
-                                theme: MessageService.Theme.INFO,
+                                theme: Io.Theme.INFO,
                                 buttons: categories.map(c => ({ label: c, target: { level: Level.CATEGORY, item: c, page: 0 } })),
                                 selects: [{
                                     placeholder: 'Select command',

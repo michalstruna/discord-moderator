@@ -3,12 +3,11 @@ import fs from 'fs'
 import path from 'path'
 import { findBestMatch, Rating } from 'string-similarity'
 
-import Color from '../constants/Color'
 import Command from '../model/Command'
-import { ActionOptions, ActionMeta, CommandOptions, Part, ServerAction, ServerAuth, ServerCommand, ServerRoles } from '../model/types'
+import { ActionOptions, ActionMeta, CommandOptions, Part, ServerAction, ServerCommand, ServerRoles } from '../model/types'
 import { ArgParser, ParsedArgs } from '../model/Arg'
 import { CanceledError, DefaultError } from '../model/Error'
-import MessageService from './MessageService'
+import Io from './Io'
 import Config from '../constants/Config'
 import CommandCategory from '../constants/CommandCategory'
 
@@ -104,16 +103,16 @@ module CommandService {
             const analyzedArgs = await testedArgsSet.analyze(meta)
 
             await action.execute(analyzedArgs, meta) // TODO: Check perms.
-            if (action.react !== false) MessageService.reactSuccess(meta.msg)
+            if (action.react !== false) Io.reactSuccess(meta.msg)
         } catch (error) {
             if (error instanceof CanceledError) return
             console.log('CommandService.execute', error)
-            MessageService.reactFail(meta.msg)
+            Io.reactFail(meta.msg)
 
             if (error instanceof DefaultError) { // TODO: Not working.
-                MessageService.send(meta.msg.channel, { embeds: [{ title: error.getTitle() || undefined, description: error.getMessage(), color: error.getColor(), theme: MessageService.Theme.FAIL }] })
+                Io.embed(meta.msg.channel, { title: error.getTitle() || undefined, description: error.getMessage(), color: error.getColor(), theme: Io.Theme.FAIL })
             } else if (error instanceof Error) {
-                MessageService.sendFail(meta.msg.channel, error.message)
+                Io.fail(meta.msg.channel, error.message)
             }
         }
     }

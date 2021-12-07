@@ -1,7 +1,7 @@
 import Command, { Action } from '../../model/Command'
 import RoleType from '../../constants/RoleType'
 import { Text, List, Role, Int } from '../../model/Arg'
-import MessageService from '../../service/MessageService'
+import Io from '../../service/Io'
 import CommandCategory from '../../constants/CommandCategory'
 import { MessageActionRow, MessageSelectMenu, MessageSelectOptionData, OAuth2Guild } from 'discord.js'
 import ComponentId from '../../constants/ComponentId'
@@ -21,14 +21,14 @@ export default new Command({
                 new Int('max', 'Max number of roles.').min(1).max(25).default(25),
                 new Text('placeholder', 'Placeholder for selectbox.').explicit().multi(),
                 new Text('empty', 'Label for empty option.').explicit().multi(),
-                ...MessageService.getEchoArgs()
+                ...Io.getEchoArgs()
             ],
             auth: { permit: [RoleType.ADMIN] },
             execute: async ({ roles, emojis, max, placeholder, empty, ...message }, meta) => {
                 const options: MessageSelectOptionData[] = roles.map((r, i) => ({ label: r.name, value: r.id, emoji: emojis[i]}))
                 if (empty) options.unshift({ label: empty, value: ComponentId.EMPTY_VALUE })
 
-                MessageService.echo({
+                Io.echo({
                     ...message,
                     components: [
                         new MessageActionRow().addComponents(

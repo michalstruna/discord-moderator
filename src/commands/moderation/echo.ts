@@ -1,6 +1,6 @@
 import Command, { Action } from '../../model/Command'
 import RoleType from '../../constants/RoleType'
-import MessageService from '../../service/MessageService'
+import Io from '../../service/Io'
 import CommandCategory from '../../constants/CommandCategory'
 
 export default new Command({
@@ -10,9 +10,9 @@ export default new Command({
     actions: [
         Action({
             name: 'send',
-            args: MessageService.getEchoArgs(),
+            args: Io.getEchoArgs(),
             auth: { permit: [RoleType.ADMIN, RoleType.MOD] },
-            execute: MessageService.echo,
+            execute: Io.echo,
             description: 'Send message to the channel.',
             examples: [['Text.'], ['#general', '-as', '@Michal', '-description', 'Announcement']]
         })

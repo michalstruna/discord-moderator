@@ -1,7 +1,7 @@
 import { Client, GuildMember, Interaction, MessageSelectMenu } from 'discord.js'
 
 import ComponentId from '../../constants/ComponentId'
-import { embed, Theme } from '../../service/Io'
+import Io from '../../service/Io'
 import UserService from '../../service/UserService'
 import { subtract } from '../../utils/Collections'
 import { role } from '../../utils/Outputs'
@@ -24,7 +24,7 @@ export default async (client: Client, i: Interaction) => {
             if (uniqueRemoved.length > 0) changes.push(`Removed: ${role(uniqueRemoved)}.`)
             if (uniqueAdded.length > 0) changes.push(`Added: ${role(uniqueAdded)}.`)
             if (changes.length === 0) changes.push('No changes.')
-            await embed(i, { description: changes.join('\n'), theme: Theme.INFO }, { ephemeral: true })
+            await Io.embed(i, { description: changes.join('\n'), theme: Io.Theme.INFO }, { ephemeral: true })
         }
 
         //await i.deferUpdate()

@@ -2,9 +2,9 @@ import Command, { Action } from '../../model/Command'
 import RoleType from '../../constants/RoleType'
 import Config from '../../constants/Config'
 import { Text, Switch } from '../../model/Arg'
-import MessageService from '../../service/MessageService'
 import ServerService from '../../service/ServerService'
 import CommandCategory from '../../constants/CommandCategory'
+import Io from '../../service/Io'
 
 export default new Command({
     name: 'prefix',
@@ -20,7 +20,7 @@ export default new Command({
             auth: { permit: [RoleType.ADMIN] },
             execute: async ({ prefix }, { msg }) => {
                 await ServerService.updateById(msg.guild!.id, { prefix })
-                MessageService.sendSuccess(msg.channel, `Prefix for this server was set to \`${prefix}\``)
+                Io.success(msg.channel, `Prefix for this server was set to \`${prefix}\``)
             },
             description: 'Set new prefix.',
             examples: [['&']]
@@ -33,14 +33,14 @@ export default new Command({
             auth: { permit: [RoleType.ADMIN] },
             execute: async (args, { msg }) => {
                 await ServerService.updateById(msg.guild!.id, { prefix: Config.DEFAULT_PREFIX })
-                MessageService.sendSuccess(msg.channel, `Prefix for this server was reset to \`${Config.DEFAULT_PREFIX}\``)
+                Io.success(msg.channel, `Prefix for this server was reset to \`${Config.DEFAULT_PREFIX}\``)
             },
             description: `Reset prefix to default ${Config.DEFAULT_PREFIX}.`,
         }),
         Action({
             name: 'get',
             execute: async (args, { msg, server }) => {
-                MessageService.sendInfo(msg.channel, `Current prefix: \`${server.prefix}\``)
+                Io.info(msg.channel, `Current prefix: \`${server.prefix}\``)
             },
             description: 'Show current prefix.',
         })

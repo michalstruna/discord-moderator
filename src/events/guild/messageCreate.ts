@@ -2,12 +2,12 @@ import { Client, Message } from 'discord.js'
 
 import { ActionMeta } from '../../model/types'
 import CommandService from '../../service/CommandService'
-import MessageService from '../../service/MessageService'
+import Io from '../../service/Io'
 import ServerService from '../../service/ServerService'
 
 const handleCommand = async (meta: ActionMeta) => {
     if (!meta.msg.content.startsWith(meta.server.prefix)) return // Ignore non-command messages.
-    const [commandName, argParser] = MessageService.parseCommand(meta.msg.content, meta.server.prefix)
+    const [commandName, argParser] = Io.parseCommand(meta.msg.content, meta.server.prefix)
     const command = CommandService.getByName(commandName!)
 
     if (command) {
@@ -15,7 +15,7 @@ const handleCommand = async (meta: ActionMeta) => {
     } else {
         const command = CommandService.getBySimilarName(commandName!)
 
-        if (command && await MessageService.confirm(meta.msg.channel, `Did you mean \`${command.name}\`?`, [meta.msg.author.id])) {
+        if (command && await Io.confirm(meta.msg.channel, `Did you mean \`${command.name}\`?`, [meta.msg.author.id])) {
             CommandService.execute(command, argParser!, meta)
         }
     }
