@@ -3,7 +3,7 @@ import { unique } from './Collections'
 import { getActionPerms } from './Perms'
 
 export const member = (id: string) => `<@${id}>`
-export const role = (id: string) => `<@&${id}>`
+export const role = (id: string | string[]) => (Array.isArray(id) ? id : [id]).map(r => `<@&${r}>`).join(', ')
 export const channel = (id: string) => `<#${id}>`
 export const everyone = () => '@everyone'
 

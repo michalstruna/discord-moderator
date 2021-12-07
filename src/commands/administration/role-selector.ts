@@ -3,7 +3,7 @@ import RoleType from '../../constants/RoleType'
 import { Text, List, Role, Int } from '../../model/Arg'
 import MessageService from '../../service/MessageService'
 import CommandCategory from '../../constants/CommandCategory'
-import { MessageActionRow, MessageSelectMenu, MessageSelectOptionData } from 'discord.js'
+import { MessageActionRow, MessageSelectMenu, MessageSelectOptionData, OAuth2Guild } from 'discord.js'
 import ComponentId from '../../constants/ComponentId'
 
 // TODO: Try catch. 

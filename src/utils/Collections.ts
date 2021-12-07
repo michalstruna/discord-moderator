@@ -23,3 +23,7 @@ export const getPageItems = <Item>(array: Item[], page: number, pageSize: number
     const endIndex = startIndex + pageSize
     return array.slice(startIndex, endIndex)
 }
+
+export const subtract = <Item>(source: Item[], minus: Item[]): Item[] => {
+    return source.filter(item => !minus.includes(item))
+}

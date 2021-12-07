@@ -1,4 +1,4 @@
-import { ColorResolvable, GuildMember, Interaction, InteractionReplyOptions, Message, MessageActionRow, MessageButton, MessageEmbedOptions, MessageSelectMenu, SelectMenuInteraction, TextBasedChannel, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
+import { ColorResolvable, GuildMember, Interaction, Message, MessageActionRow, MessageButton, MessageEmbedOptions, MessageSelectMenu, SelectMenuInteraction, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
 import { v4 as Id } from 'uuid'
 
 import ColorType from '../constants/Color'

@@ -1,15 +1,10 @@
 import { Client, GuildMember, Interaction, MessageSelectMenu } from 'discord.js'
-import Color from '../../constants/Color'
 
 import ComponentId from '../../constants/ComponentId'
-import MessageService from '../../service/MessageService'
+import { embed, Theme } from '../../service/Io'
 import UserService from '../../service/UserService'
-import { list, role } from '../../utils/Outputs'
-
-const parseCustomId = (input: string) => {
-    const [id, rawConfig] = input.split('__')
-    return { id, config: rawConfig ? JSON.parse(rawConfig) : {} }
-}
+import { subtract } from '../../utils/Collections'
+import { role } from '../../utils/Outputs'
 
 export default async (client: Client, i: Interaction) => {
     if (!i.member) return
@@ -22,7 +17,14 @@ export default async (client: Client, i: Interaction) => {
             const addRoles = i.values.filter(v => v !== ComponentId.EMPTY_VALUE)
             const removed = await UserService.removeRole(i.member as GuildMember, ...allRoles)
             const added = await UserService.addRole(i.member as GuildMember, ...addRoles)
-            await MessageService.sendInfo(i, `${list(addRoles.map(role))}`, undefined, { ephemeral: true })
+            const uniqueRemoved = subtract(removed, added)
+            const uniqueAdded = subtract(added, removed)
+
+            const changes = []
+            if (uniqueRemoved.length > 0) changes.push(`Removed: ${role(uniqueRemoved)}.`)
+            if (uniqueAdded.length > 0) changes.push(`Added: ${role(uniqueAdded)}.`)
+            if (changes.length === 0) changes.push('No changes.')
+            await embed(i, { description: changes.join('\n'), theme: Theme.INFO }, { ephemeral: true })
         }
 
         //await i.deferUpdate()
