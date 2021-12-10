@@ -20,17 +20,13 @@ export default new Command({
                 new List('emojis', 'List of icons for roles.', new Text()).explicit().default([]),
                 new Int('max', 'Max number of roles.').min(1).max(25).default(25),
                 new Text('placeholder', 'Placeholder for selectbox.').explicit().multi(),
-                new Text('empty', 'Label for empty option.').explicit().multi(),
-                new Switch('list', 'List all roles in message.'),
                 ...Io.getEchoArgs()
             ],
             auth: { permit: [RoleType.ADMIN] },
-            execute: async ({ roles, emojis, max, placeholder, empty, list, ...message }, meta) => {
+            execute: async ({ roles, emojis, max, placeholder, ...message }, meta) => {
                 const options: MessageSelectOptionData[] = roles.map((r, i) => ({ label: r.name, value: r.id, emoji: emojis[i]}))
-                if (empty) options.unshift({ label: empty, value: ComponentId.EMPTY_VALUE })
-                const nFields = roles.length % 3 === 0 ? roles.length : 3 * Math.floor(roles.length / 3) + 3
-                if (list) message.fields = new Array(nFields).fill('‎++‎++inline').map((empty, i) => roles[i] ? `${emojis[i]}‎++${roles[i].toString()}++inline` : empty)
-
+                options.unshift({ label: '___', value: ComponentId.EMPTY_VALUE })
+                
                 Io.echo({
                     ...message,
                     components: [
@@ -38,7 +34,7 @@ export default new Command({
                             new MessageSelectMenu()
                                 .setCustomId(ComponentId.ROLE_SELECTOR)
                                 .setMaxValues(Math.min(max, roles.length))
-                                .setPlaceholder(placeholder)
+                                .setPlaceholder(placeholder || '')
                                 .addOptions(options)
                             )
                     ]
