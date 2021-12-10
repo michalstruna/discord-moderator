@@ -1,7 +1,7 @@
 import argv from 'yargs-parser'
-import { ActionMeta, CommandOptions } from './types'
-import { ColorResolvable, GuildMember, Role as GuildRole, TextBasedChannels } from 'discord.js'
+import { ColorResolvable, GuildMember, Role as GuildRole, TextBasedChannels, Message as DiscordMessage } from 'discord.js'
 
+import { ActionMeta, CommandOptions } from './types'
 import { InvalidInputError, NotFoundError } from './Error'
 import { codeList } from '../utils/Outputs'
 import CommandService from '../service/CommandService'
@@ -298,6 +298,18 @@ export class Channel<Name extends string> extends Arg<Name, TextBasedChannels> {
         if (channel) return channel
         if (this.defaultValue === Channel.CURRENT) return msg.channel
         throw new NotFoundError(`Channel \`${input}\` was not found.`)
+    }
+
+}
+
+export class Message<Name extends string> extends Arg<Name, DiscordMessage> {
+
+    public test(value: string) {
+        return Regex.MESSAGE.test(value)
+    }
+
+    public async parse(input: string, { msg }: ActionMeta) {
+        return ((msg.mentions.channels.first() || msg.channel) as TextBasedChannels).messages.fetch(input)
     }
 
 }

@@ -1,4 +1,4 @@
-import { MessageButtonStyle, MessageEmbedOptions, MessageOptions as DiscordMessageOptions } from 'discord.js'
+import { MessageButtonStyle, MessageComponentOptions, MessageEmbedOptions, MessageOptions as DiscordMessageOptions } from 'discord.js'
 
 import Color from '../constants/Color'
 import Emoji from '../constants/Emoji'
@@ -56,3 +56,9 @@ export type Theme = {
     color: Color
     emoji: Emoji
 }
+
+export type MessageSource = {
+    content?: string
+    embeds?: MessageEmbedOptions[]
+    components?: MessageComponentOptions[]
+} // TODO: Other properties.

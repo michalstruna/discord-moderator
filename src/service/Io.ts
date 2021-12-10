@@ -1,4 +1,4 @@
-import { ColorResolvable, GuildMember, Interaction, InteractionReplyOptions, Message, MessageActionRow, MessageButton, MessageComponentInteraction, MessageEditOptions, MessageEmbedOptions, MessageOptions, MessageReaction, MessageSelectMenu, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
+import { ColorResolvable, GuildMember, Interaction, InteractionReplyOptions, Message, MessageActionRow, MessageButton, MessageComponentInteraction, MessageComponentOptions, MessageEditOptions, MessageEmbed, MessageEmbedOptions, MessageOptions, MessageReaction, MessageSelectMenu, TextBasedChannels, Webhook, WebhookClient } from 'discord.js'
 import { v4 as Id } from 'uuid'
 
 import Color from '../constants/Color'
@@ -9,7 +9,7 @@ import { ForbiddenError } from '../model/Error'
 import { ActionMeta } from '../model/types'
 import { equals } from '../utils/Objects'
 import { truncate } from '../utils/Strings'
-import { EmbedOptions, Page, PageButton, PageOptions, PageRenderer, PageSelect, PagesOptions, Theme as ThemeType } from './type'
+import { EmbedOptions, MessageSource, Page, PageButton, PageOptions, PageRenderer, PageSelect, PagesOptions, Theme as ThemeType } from './type'
 
 
 module Io {
@@ -169,6 +169,16 @@ module Io {
         } else {
             channel.send(buildMessage(message))
         }
+    }
+
+    export const source = (message: Message): MessageSource => {
+        const result: MessageSource = {}
+
+        if (message.content) result.content = message.content
+        if (message.embeds?.length > 0) result.embeds = message.embeds as MessageEmbedOptions[]
+        if (message.components?.length > 0) result.components = message.components as MessageComponentOptions[]
+
+        return result
     }
 
     const buildMessage = (src: ArgsEmbed): MessageOptions => {
