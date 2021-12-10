@@ -181,31 +181,49 @@ module Io {
         return result
     }
 
-    const buildMessage = (src: ArgsEmbed): MessageOptions => {
-        const buildEmbed = (src: ArgsEmbed): MessageEmbedOptions => {
-            const result: Record<string, any> = {}
+    export const unbuildEmbed = (src: MessageEmbedOptions): ArgsEmbed => {
+        const result: any = {}
+        const norm = (v: string) => v.replace(/([A-Z]+)/g, '_$1').toLowerCase()
 
-            for (const prop in src) {
-                if (prop === 'fields') {
-                    result.fields = src[prop]!.map(f => {
-                        const [name, value, inline] = f.split('++')
-                        return { name, value, inline: inline === 'inline' }
-                    })
-                } else if (prop.includes('-')) {
-                    const [outer, inner] = prop.split('-')
-                    if (!result[outer]) result[outer] = {}
-                    result[outer][inner] = src[prop as keyof ArgsEmbed]
-                } else {
-                    result[prop] = src[prop as keyof ArgsEmbed]
+        for (const i in src) {
+            const val = src[i as keyof MessageEmbedOptions] as any
+
+            if (typeof val === 'object') {
+                for (const j in val) {
+                    if (val[j] && !j.toLowerCase().includes('proxy')) result[norm(`${i}-${j}`)] = val[j]
                 }
+            } else {
+                if (val && !i.toLowerCase().includes('proxy') && i !== 'type') result[norm(i)] = val
             }
-
-            return result
         }
 
+        return result
+    }
+
+    export const buildEmbed = (src: ArgsEmbed): MessageEmbedOptions => {
+        const result: Record<string, any> = {}
+
+        for (const prop in src) {
+            if (prop === 'fields') {
+                result.fields = src[prop]!.map(f => {
+                    const [name, value, inline] = f.split('++')
+                    return { name, value, inline: inline === 'inline' }
+                })
+            } else if (prop.includes('-')) {
+                const [outer, inner] = prop.split('-')
+                if (!result[outer]) result[outer] = {}
+                result[outer][inner] = src[prop as keyof ArgsEmbed]
+            } else {
+                result[prop] = src[prop as keyof ArgsEmbed]
+            }
+        }
+
+        return result
+    }
+
+    const buildMessage = (src: ArgsEmbed): MessageOptions => {
         const isEmbed = src.title || src.color
         let result = isEmbed ? { ...src, embeds: [buildEmbed(src)] } : { ...src, content: src.description }
-
         return result
     }
 
